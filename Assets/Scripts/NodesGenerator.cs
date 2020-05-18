@@ -47,16 +47,18 @@ public class NodesGenerator : MonoBehaviour
 
     }
 
-    private void Update()
-    {
-        FindPath();
-    }
+   
 
     private void OnValidate()
     {
-        gridSettings.onValidate = OnValidate;
+        GetComponent<MeshCollider>().enabled = false;
+        if (gridSettings.onValidate != OnValidate)
+        {
+            gridSettings.onValidate = OnValidate;
+        }
         GenerateGrid();
         MarchCubes();
+        GetComponent<MeshCollider>().enabled = true;
     }
 
     public void FindPath(float drawDuration = 0)
@@ -141,6 +143,7 @@ public class NodesGenerator : MonoBehaviour
     {
         var combine = new List<CombineInstance>();
         var filter = GetComponent<MeshFilter>();
+        var collider = GetComponent<MeshCollider>();
         foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.size / 2))
         {
             var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
@@ -150,7 +153,12 @@ public class NodesGenerator : MonoBehaviour
             var verts = mesh.vertices;
             for (int i = 0; i < verts.Length; i++)
             {
-                verts[i] += new Vector3(Mathf.Sign(verts[i].x) / scale.x, Mathf.Sign(verts[i].y) / scale.y, Mathf.Sign(verts[i].z) / scale.z) * gridSettings.navMeshOffset;
+                verts[i] += new Vector3
+                    (
+                        Mathf.Sign(verts[i].x) / scale.x, 
+                        Mathf.Sign(verts[i].y) / scale.y, 
+                        Mathf.Sign(verts[i].z) / scale.z
+                    ) * gridSettings.navMeshOffset;
                 verts[i] = obj.transform.localToWorldMatrix.MultiplyPoint3x4(verts[i]);
                 verts[i] -= transform.position;
             }
@@ -163,11 +171,15 @@ public class NodesGenerator : MonoBehaviour
         combinedMesh.RecalculateNormals();
         combinedMesh.Optimize();
         filter.mesh = combinedMesh;
+        collider.sharedMesh = combinedMesh;
     }
 
     public void MarchCubes()
     {
         var filter = GetComponent<MeshFilter>();
+        var collider = GetComponent<MeshCollider>();
+        filter.sharedMesh = null;
+        collider.sharedMesh = null;
         if (grid == null)
         {
             GenerateGrid();
@@ -176,5 +188,6 @@ public class NodesGenerator : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.Optimize();
         filter.mesh = mesh;
+        collider.sharedMesh = mesh;
     }
 }

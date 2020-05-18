@@ -12,8 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53333cedd39cb0c4fb748797ad1287d6, type: 3}
   m_Name: Grid
   m_EditorClassIdentifier: 
-  drawNodes: 1
+  drawNodes: 0
   color: {r: 0, g: 1, b: 0, a: 0.11764706}
-  size: {x: 50, y: 50, z: 50}
-  navMeshOffset: 2.23
-  step: {x: 4, y: 4, z: 4}
+  size: {x: 100, y: 100, z: 100}
+  navMeshOffset: 2.78
+  step: {x: 5, y: 5, z: 5}
+  mode: 0
+  scale: 0.001
+  threshold: 0
+  seed: 0
+  useRandomSeed: 0
