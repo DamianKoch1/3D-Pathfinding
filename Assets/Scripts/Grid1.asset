@@ -14,6 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   drawNodes: 1
   color: {r: 1, g: 0.50980395, b: 0, a: 0.43529412}
-  size: {x: 50, y: 50, z: 50}
-  navMeshOffset: 1.16
-  step: {x: 1, y: 1, z: 1}
+  size: {x: 200, y: 200, z: 200}
+  navMeshOffset: 4.47
+  step: {x: 10, y: 10, z: 10}
+  mode: 1
+  scale: 0.0079
+  threshold: 133
+  seed: 2364
+  useRandomSeed: 0

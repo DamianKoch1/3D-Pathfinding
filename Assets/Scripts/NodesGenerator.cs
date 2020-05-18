@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using SimplexNoise;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -25,12 +26,37 @@ public class NodesGenerator : MonoBehaviour
     [ContextMenu("Generate Grid")]
     public void GenerateGrid()
     {
-        grid = new Grid(transform.position, gridSettings, (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset, Physics.AllLayers).Length == 0);
+        System.Func<Vector3, bool> walkableCheck = null;
+
+        switch (gridSettings.mode)
+        {
+            case Mode.Physics:
+                walkableCheck = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0;
+                break;
+            case Mode.Noise:
+                if (gridSettings.useRandomSeed)
+                {
+                    gridSettings.seed = Random.Range(0, 10000);
+                    Noise.Seed = gridSettings.seed;
+                }
+                walkableCheck = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) >= gridSettings.threshold;
+                break;
+        }
+
+        grid = new Grid(transform.position, gridSettings, walkableCheck);
+
     }
 
     private void Update()
     {
         FindPath();
+    }
+
+    private void OnValidate()
+    {
+        gridSettings.onValidate = OnValidate;
+        GenerateGrid();
+        MarchCubes();
     }
 
     public void FindPath(float drawDuration = 0)
@@ -65,6 +91,15 @@ public class NodesGenerator : MonoBehaviour
     [ContextMenu("RandomizeObstacles")]
     public void RandomizeObstacles()
     {
+        if (!obstacleSettings.generate)
+        {
+            while (transform.childCount > 0)
+            {
+                DestroyImmediate(transform.GetChild(0).gameObject);
+            }
+            return;
+        }
+
         if (!obstacleSettings.prefab) return;
 
         var childCount = transform.childCount;

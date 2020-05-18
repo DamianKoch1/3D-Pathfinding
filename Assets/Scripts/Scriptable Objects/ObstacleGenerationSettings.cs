@@ -5,7 +5,8 @@ using UnityEngine;
 [CreateAssetMenu]
 public class ObstacleGenerationSettings : ScriptableObject
 {
-    [Header("Obstacle generation settings")]
+    public bool generate;
+
     public GameObject prefab;
 
     public int count;
