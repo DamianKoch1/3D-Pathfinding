@@ -9,19 +9,17 @@ public class Grid
 
     public Node[,,] nodes;
 
-    private Vector3 center;
+    public Vector3 center;
 
-    private Vector3 size;
+    public Vector3 size;
 
-    private Vector3 step;
+    public Vector3 step;
 
-    private Color color;
+    public int maxX;
+    public int maxY;
+    public int maxZ;
 
-    private int maxX;
-    private int maxY;
-    private int maxZ;
-
-    public Grid(Vector3 _center, GridGenerationSettings settings, Func<Vector3, bool> walkableCheck)
+    public Grid(Vector3 _center, GridGenerationSettings settings, Func<Vector3, float> GetIsoValue)
     {
         settings.step.x = Mathf.Max(settings.step.x, 0.5f);
         settings.step.y = Mathf.Max(settings.step.y, 0.5f);
@@ -34,8 +32,6 @@ public class Grid
         maxY = (int)(size.y / step.y);
         maxZ = (int)(size.z / step.z);
 
-        color = settings.color;
-
         nodes = new Node[maxX, maxY, maxZ];
 
         Vector3 pos = center - size / 2;
@@ -45,7 +41,7 @@ public class Grid
             {
                 for (int z = 0; z < maxZ; z++)
                 {
-                    nodes[x, y, z] = new Node(pos, walkableCheck(pos), x, y, z);
+                    nodes[x, y, z] = new Node(pos, GetIsoValue(pos), x, y, z);
                     pos.z += step.z;
                 }
                 pos.z = center.z - size.z / 2;
@@ -56,35 +52,11 @@ public class Grid
         }
     }
 
-    public void DrawGizmos()
+    public void DrawGizmos(Color color, float isoLevel)
     {
-        Gizmos.color = color;
-        Vector3 pos = center - size / 2;
-        for (int x = 0; x <= maxX; x++)
+        foreach (var node in nodes)
         {
-            for (int y = 0; y <= maxY; y++)
-            {
-                var start = pos + Vector3.right * step.x * x + Vector3.up * step.y * y;
-                Gizmos.DrawLine(start, start + Vector3.forward * size.z);
-            }
-        }
-
-        for (int x = 0; x <= maxX; x++)
-        {
-            for (int z = 0; z <= maxZ; z++)
-            {
-                var start = pos + Vector3.right * step.x * x + Vector3.forward * step.z * z;
-                Gizmos.DrawLine(start, start + Vector3.up * size.y);
-            }
-        }
-
-        for (int y = 0; y <= maxY; y++)
-        {
-            for (int z = 0; z <= maxZ; z++)
-            {
-                var start = pos + Vector3.up * step.y * y + Vector3.forward * step.z * z;
-                Gizmos.DrawLine(start, start + Vector3.right * size.x);
-            }
+            node.DrawGizmos(color, isoLevel);
         }
     }
 
@@ -210,7 +182,7 @@ public class Grid
 
             foreach (var neighbour in neighbours)
             {
-                if (neighbour.walkable)
+                if (neighbour.isoValue > 0)
                 {
                     if (!closedNodes.Contains(neighbour))
                     {

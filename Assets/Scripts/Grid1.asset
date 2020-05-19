@@ -13,12 +13,14 @@ MonoBehaviour:
   m_Name: Grid1
   m_EditorClassIdentifier: 
   drawNodes: 0
-  color: {r: 1, g: 0.50980395, b: 0, a: 0.43529412}
+  color: {r: 0.087417364, g: 1, b: 0, a: 1}
   size: {x: 100, y: 100, z: 100}
-  navMeshOffset: 2.27
+  navMeshOffset: 0
+  isoLevel: 0.233
   step: {x: 3, y: 3, z: 3}
+  chunkSize: {x: 0, y: 0, z: 0}
+  chunkCount: {x: 0, y: 0, z: 0}
   mode: 1
-  scale: 0.028
-  threshold: 118.5
-  seed: 4313
+  scale: 0.0208
+  seed: 1530
   useRandomSeed: 0

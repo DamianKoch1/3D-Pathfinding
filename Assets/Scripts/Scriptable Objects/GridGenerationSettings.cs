@@ -15,16 +15,20 @@ public class GridGenerationSettings : ScriptableObject
     [Range(0, 5)]
     public float navMeshOffset;
 
+    [Range(0, 1), Tooltip("Node is walkable if it has iso value above this")]
+    public float isoLevel;
+
     public Vector3 step;
+
+    public Vector3 chunkSize;
+
+    public Vector3Int chunkCount;
 
     public Mode mode;
 
     [Header("Noise mode")]
     [Range(0.001f, 0.03f)]
     public float scale;
-
-    [Range(0, 255)]
-    public float threshold;
 
     public int seed;
 
@@ -40,6 +44,6 @@ public class GridGenerationSettings : ScriptableObject
 
 public enum Mode
 {
-    Physics,
+    Overlap,
     Noise
 }

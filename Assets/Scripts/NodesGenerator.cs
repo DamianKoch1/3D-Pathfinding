@@ -23,15 +23,17 @@ public class NodesGenerator : MonoBehaviour
     [SerializeField]
     private Transform end;
 
+
+
     [ContextMenu("Generate Grid")]
     public void GenerateGrid()
     {
-        System.Func<Vector3, bool> walkableCheck = null;
+        System.Func<Vector3, float> GetIsoValue = null;
 
         switch (gridSettings.mode)
         {
-            case Mode.Physics:
-                walkableCheck = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0;
+            case Mode.Overlap:
+                GetIsoValue = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0 ? 1 : 0;
                 break;
             case Mode.Noise:
                 if (gridSettings.useRandomSeed)
@@ -39,15 +41,15 @@ public class NodesGenerator : MonoBehaviour
                     gridSettings.seed = Random.Range(0, 10000);
                     Noise.Seed = gridSettings.seed;
                 }
-                walkableCheck = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) >= gridSettings.threshold;
+                GetIsoValue = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) / 255f;
                 break;
         }
 
-        grid = new Grid(transform.position, gridSettings, walkableCheck);
+        grid = new Grid(transform.position, gridSettings, GetIsoValue);
 
     }
 
-   
+
 
     private void OnValidate()
     {
@@ -84,7 +86,7 @@ public class NodesGenerator : MonoBehaviour
         {
             if (gridSettings.drawNodes)
             {
-                grid.DrawGizmos();
+                grid.DrawGizmos(gridSettings.color, gridSettings.isoLevel);
             }
         }
     }
@@ -155,8 +157,8 @@ public class NodesGenerator : MonoBehaviour
             {
                 verts[i] += new Vector3
                     (
-                        Mathf.Sign(verts[i].x) / scale.x, 
-                        Mathf.Sign(verts[i].y) / scale.y, 
+                        Mathf.Sign(verts[i].x) / scale.x,
+                        Mathf.Sign(verts[i].y) / scale.y,
                         Mathf.Sign(verts[i].z) / scale.z
                     ) * gridSettings.navMeshOffset;
                 verts[i] = obj.transform.localToWorldMatrix.MultiplyPoint3x4(verts[i]);
@@ -184,7 +186,7 @@ public class NodesGenerator : MonoBehaviour
         {
             GenerateGrid();
         }
-        var mesh = MarchingCubes.March(Node.ToBoolArray(grid.nodes), gridSettings.size, gridSettings.step);
+        var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
         mesh.RecalculateNormals();
         mesh.Optimize();
         filter.mesh = mesh;
