@@ -5,8 +5,6 @@ using UnityEngine;
 [CreateAssetMenu]
 public class PathfindingSettings : ScriptableObject
 {
-    public bool allowDiagonal;
-
     [Tooltip("If true, uses sum of coordinate distances instead of point distance")]
     public bool manhattanDistance;
 

@@ -19,6 +19,8 @@ public class Node
 
     public float isoValue;
 
+    public List<Node> neighbours;
+
     public float F
     {
         get

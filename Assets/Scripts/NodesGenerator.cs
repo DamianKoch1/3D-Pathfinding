@@ -29,7 +29,8 @@ public class NodesGenerator : MonoBehaviour
     public void GenerateGrid()
     {
         System.Func<Vector3, float> GetIsoValue = null;
-
+        var collider = GetComponent<MeshCollider>();
+        collider.enabled = false;
         switch (gridSettings.mode)
         {
             case Mode.Overlap:
@@ -46,21 +47,19 @@ public class NodesGenerator : MonoBehaviour
         }
 
         grid = new Grid(transform.position, gridSettings, GetIsoValue);
-
+        collider.enabled = true;
     }
 
 
 
     private void OnValidate()
     {
-        GetComponent<MeshCollider>().enabled = false;
         if (gridSettings.onValidate != OnValidate)
         {
             gridSettings.onValidate = OnValidate;
         }
         GenerateGrid();
         MarchCubes();
-        GetComponent<MeshCollider>().enabled = true;
     }
 
     public void FindPath(float drawDuration = 0)
@@ -69,12 +68,13 @@ public class NodesGenerator : MonoBehaviour
         {
             GenerateGrid();
         }
-        var path = grid.FindPath(start.position, end.position, pathfindingSettings);
+        var color = Random.ColorHSV();
+        var path = grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel);
         var pathPos = path.Pop();
-        Debug.DrawLine(start.position, pathPos, Color.blue, drawDuration);
+        Debug.DrawLine(start.position, pathPos, color, drawDuration);
         while (path.Count > 0)
         {
-            Debug.DrawLine(pathPos, path.Peek(), Color.blue, drawDuration);
+            Debug.DrawLine(pathPos, path.Peek(), color, drawDuration);
             pathPos = path.Pop();
         }
     }
@@ -97,9 +97,9 @@ public class NodesGenerator : MonoBehaviour
     {
         if (!obstacleSettings.generate)
         {
-            while (transform.childCount > 0)
+            while (transform.childCount > 2)
             {
-                DestroyImmediate(transform.GetChild(0).gameObject);
+                DestroyImmediate(transform.GetChild(2).gameObject);
             }
             return;
         }
@@ -146,6 +146,7 @@ public class NodesGenerator : MonoBehaviour
         var combine = new List<CombineInstance>();
         var filter = GetComponent<MeshFilter>();
         var collider = GetComponent<MeshCollider>();
+        collider.enabled = false;
         foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.size / 2))
         {
             var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
@@ -173,6 +174,7 @@ public class NodesGenerator : MonoBehaviour
         combinedMesh.RecalculateNormals();
         combinedMesh.Optimize();
         filter.mesh = combinedMesh;
+        collider.enabled = true;
         collider.sharedMesh = combinedMesh;
     }
 
@@ -187,8 +189,6 @@ public class NodesGenerator : MonoBehaviour
             GenerateGrid();
         }
         var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
-        mesh.RecalculateNormals();
-        mesh.Optimize();
         filter.mesh = mesh;
         collider.sharedMesh = mesh;
     }

@@ -52,6 +52,10 @@ public static class MarchingCubes
 
         mesh.vertices = verts.ToArray();
         mesh.triangles = tris.ToArray();
+
+        mesh.RecalculateNormals();
+        mesh.Optimize();
+
         return mesh;
     }
 

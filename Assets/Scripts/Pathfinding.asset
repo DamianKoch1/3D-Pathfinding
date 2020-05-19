@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: Pathfinding
   m_EditorClassIdentifier: 
-  allowDiagonal: 1
-  manhattanDistance: 1
+  manhattanDistance: 0
   benchmark: 1

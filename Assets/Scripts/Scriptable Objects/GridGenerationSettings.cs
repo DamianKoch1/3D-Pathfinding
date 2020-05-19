@@ -12,11 +12,10 @@ public class GridGenerationSettings : ScriptableObject
 
     public Vector3 size;
 
-    [Range(0, 5)]
-    public float navMeshOffset;
-
     [Range(0, 1), Tooltip("Node is walkable if it has iso value above this")]
     public float isoLevel;
+
+    public bool allowDiagonalNeighbours;
 
     public Vector3 step;
 
@@ -26,8 +25,12 @@ public class GridGenerationSettings : ScriptableObject
 
     public Mode mode;
 
-    [Header("Noise mode")]
-    [Range(0.001f, 0.03f)]
+    [Header("Overlap settings")]
+    [Range(0, 5)]
+    public float navMeshOffset;
+
+    [Header("Noise settings")]
+    [Range(0.001f, 0.04f)]
     public float scale;
 
     public int seed;

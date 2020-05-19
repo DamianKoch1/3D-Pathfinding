@@ -50,6 +50,18 @@ public class Grid
             pos.y = center.y - size.y / 2;
             pos.x += step.x;
         }
+
+        for (int x = 0; x < maxX; x++)
+        {
+            for (int y = 0; y < maxY; y++)
+            {
+                for (int z = 0; z < maxZ; z++)
+                {
+                    ref var node = ref nodes[x, y, z];
+                    node.neighbours = GetNeighbours(node, settings.allowDiagonalNeighbours);
+                }
+            }
+        }
     }
 
     public void DrawGizmos(Color color, float isoLevel)
@@ -132,7 +144,7 @@ public class Grid
         return nodes[x, y, z];
     }
 
-    public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings)
+    public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)
     {
         //distance from start to end
         float distance = 0;
@@ -153,22 +165,8 @@ public class Grid
 
         Stack<Vector3> path = new Stack<Vector3>();
 
-        //var hits = Physics.RaycastAll(start, end - start);
-
-        //if (hits.Length == 0)
-        //{
-        //    path.Push(end);
-        //    return path;
-        //}
-
-        //else
-        //{
-
-        //}
-
         List<Node> openNodes = new List<Node>();
         List<Node> closedNodes = new List<Node>();
-        List<Node> neighbours;
 
         Node current = startNode;
         openNodes.Add(startNode);
@@ -178,11 +176,10 @@ public class Grid
             current = openNodes[0];
             openNodes.RemoveAt(0);
             closedNodes.Add(current);
-            neighbours = GetNeighbours(current, settings.allowDiagonal);
 
-            foreach (var neighbour in neighbours)
+            foreach (var neighbour in current.neighbours)
             {
-                if (neighbour.isoValue > 0)
+                if (neighbour.isoValue > isoLevel)
                 {
                     if (!closedNodes.Contains(neighbour))
                     {

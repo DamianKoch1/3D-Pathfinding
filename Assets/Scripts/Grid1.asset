@@ -15,12 +15,13 @@ MonoBehaviour:
   drawNodes: 0
   color: {r: 0.087417364, g: 1, b: 0, a: 1}
   size: {x: 100, y: 100, z: 100}
-  navMeshOffset: 0
-  isoLevel: 0.233
+  isoLevel: 0.487
+  allowDiagonalNeighbours: 1
   step: {x: 3, y: 3, z: 3}
   chunkSize: {x: 0, y: 0, z: 0}
   chunkCount: {x: 0, y: 0, z: 0}
   mode: 1
-  scale: 0.0208
-  seed: 1530
+  navMeshOffset: 3.84
+  scale: 0.0239
+  seed: 6042
   useRandomSeed: 0
