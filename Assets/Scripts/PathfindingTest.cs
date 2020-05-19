@@ -42,7 +42,6 @@ public class PathfindingTest : MonoBehaviour
     {
         if (graph == null) return;
         if (hits.Count <= 1) return;
-        GetComponent<LineRenderer>().positionCount = 0;
         var pathPoints = new List<Vector3>();
         pathPoints.Add(transform.position);
         pathPoints.Add(hits[0].point);
@@ -51,7 +50,6 @@ public class PathfindingTest : MonoBehaviour
             pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
             if (i + 2 < hits.Count)
             {
-                pathPoints.Add(hits[i + 1].point);
                 pathPoints.Add(hits[i + 2].point);
             }
         }

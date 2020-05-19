@@ -20,7 +20,7 @@ public class MeshVertexGraph
         }
 
 
-        for (int i = 0; i < tris.Length; i+=3)
+        for (int i = 0; i < tris.Length; i += 3)
         {
             nodes[verts[tris[i]]].neighbours.Add(nodes[verts[tris[i + 1]]]);
             nodes[verts[tris[i]]].neighbours.Add(nodes[verts[tris[i + 2]]]);
@@ -48,12 +48,12 @@ public class MeshVertexGraph
         //full length of path
         float pathLength = 0;
 
-        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        System.Diagnostics.Stopwatch sw = null;
 
         if (settings.benchmark)
         {
             distance = Vector3.Distance(start, end);
-            sw.Start();
+            sw = System.Diagnostics.Stopwatch.StartNew();
         }
 
         var startNode = GetClosestNode(start);
@@ -107,8 +107,15 @@ public class MeshVertexGraph
         path.Push(end);
         while (temp != null)
         {
-            pathLength += Vector3.Distance(path.Peek(), temp.pos);
-            path.Push(temp.pos);
+            if (!path.Contains(temp.pos))
+            {
+                pathLength += Vector3.Distance(path.Peek(), temp.pos);
+                path.Push(temp.pos);
+                if (temp == startNode)
+                {
+                    break;
+                }
+            }
             temp = temp.previousPathNode;
         }
         pathLength += Vector3.Distance(path.Peek(), start);
