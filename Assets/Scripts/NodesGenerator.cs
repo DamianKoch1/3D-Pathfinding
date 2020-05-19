@@ -23,6 +23,9 @@ public class NodesGenerator : MonoBehaviour
     [SerializeField]
     private Transform end;
 
+    [SerializeField]
+    private Transform obstacles;
+
 
 
     [ContextMenu("Generate Grid")]
@@ -97,34 +100,34 @@ public class NodesGenerator : MonoBehaviour
     {
         if (!obstacleSettings.generate)
         {
-            while (transform.childCount > 2)
+            while (obstacles.childCount > 0)
             {
-                DestroyImmediate(transform.GetChild(2).gameObject);
+                DestroyImmediate(obstacles.GetChild(0).gameObject);
             }
             return;
         }
 
         if (!obstacleSettings.prefab) return;
 
-        var childCount = transform.childCount;
+        var childCount = obstacles.childCount;
         if (childCount < obstacleSettings.count)
         {
             for (int i = childCount; i < obstacleSettings.count; i++)
             {
-                Instantiate(obstacleSettings.prefab, transform);
+                Instantiate(obstacleSettings.prefab, obstacles);
             }
         }
         else
         {
             for (int i = 0; i < childCount - obstacleSettings.count; i++)
             {
-                DestroyImmediate(transform.GetChild(0).gameObject);
+                DestroyImmediate(obstacles.GetChild(0).gameObject);
             }
         }
 
-        foreach (Transform child in transform)
+        foreach (Transform child in obstacles)
         {
-            child.position = transform.position + new Vector3
+            child.position = obstacles.position + new Vector3
                 (
                     Random.Range(-gridSettings.size.x / 2, gridSettings.size.x / 2),
                     Random.Range(-gridSettings.size.y / 2, gridSettings.size.y / 2),

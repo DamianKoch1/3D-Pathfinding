@@ -19,7 +19,7 @@ public class Node
 
     public float isoValue;
 
-    public List<Node> neighbours;
+    public HashSet<Node> neighbours;
 
     public float F
     {
@@ -35,6 +35,7 @@ public class Node
 
     public Node(Vector3 _pos, float _walkable, int _iX = -1, int _iY = -1, int _iZ = -1)
     {
+        neighbours = new HashSet<Node>();
         pos = _pos;
         iX = _iX;
         iY = _iY;
@@ -47,4 +48,6 @@ public class Node
         Gizmos.color = isoValue >= isoLevel ? color : Color.red;
         Gizmos.DrawWireCube(pos, Vector3.one * 0.1f);
     }
+
+
 }

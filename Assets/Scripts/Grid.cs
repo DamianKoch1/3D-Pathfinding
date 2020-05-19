@@ -72,7 +72,7 @@ public class Grid
         }
     }
 
-    private void AddNeighbour(Node node, List<Node> neighbours, int dirX, int dirY, int dirZ)
+    private void AddNeighbour(Node node, HashSet<Node> neighbours, int dirX, int dirY, int dirZ)
     {
         dirX = Mathf.Clamp(dirX, -1, 1);
         dirY = Mathf.Clamp(dirY, -1, 1);
@@ -90,10 +90,10 @@ public class Grid
         neighbours.Add(nodes[x, y, z]);
     }
 
-    public List<Node> GetNeighbours(Node node, bool includeDiagonal = true)
+    public HashSet<Node> GetNeighbours(Node node, bool includeDiagonal = true)
     {
         if (node.iX < 0 || node.iY < 0 || node.iZ < 0) return null;
-        List<Node> neighbours = new List<Node>();
+        HashSet<Node> neighbours = new HashSet<Node>();
         AddNeighbour(node, neighbours, -1, 0, 0);
         AddNeighbour(node, neighbours, 1, 0, 0);
         AddNeighbour(node, neighbours, 0, -1, 0);
@@ -126,7 +126,7 @@ public class Grid
         return neighbours;
     }
 
-    //TODO error if node isnt walkable
+    //TODO error if node isnt walkable, should also find adjacent node closest to target instead, probably insert a temporary node here
     public Node GetClosestNode(Vector3 position)
     {
         Vector3 startCorner = center - size / 2;
