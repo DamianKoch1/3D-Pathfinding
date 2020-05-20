@@ -34,5 +34,10 @@ public class OctreeGeneratorEditor : Editor
         {
             ((NodesGenerator)target).FindPath(10);
         }
+
+        if (GUILayout.Button("Clear"))
+        {
+            ((NodesGenerator)target).Clear();
+        }
     }
 }

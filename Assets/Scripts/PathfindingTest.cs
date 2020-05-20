@@ -5,6 +5,9 @@ using UnityEngine;
 public class PathfindingTest : MonoBehaviour
 {
     [SerializeField]
+    private Transform start;
+
+    [SerializeField]
     private Transform target;
 
     [SerializeField]
@@ -24,18 +27,10 @@ public class PathfindingTest : MonoBehaviour
     private Vector3 prevPosition;
 
     [ContextMenu("Build Graph")]
-    private void BuildGraph()
+    public void BuildGraph()
     {
         graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
     }
-
-    [ContextMenu("Clear")]
-    private void Clear()
-    {
-        graph = null;
-        GetComponent<LineRenderer>().positionCount = 0;
-    }
-
 
     [ContextMenu("Find path")]
     public void FindPath()
@@ -43,7 +38,7 @@ public class PathfindingTest : MonoBehaviour
         if (graph == null) return;
         if (hits.Count <= 1) return;
         var pathPoints = new List<Vector3>();
-        pathPoints.Add(transform.position);
+        pathPoints.Add(start.position);
         pathPoints.Add(hits[0].point);
         for (int i = 0; i < hits.Count; i += 2)
         {
@@ -60,12 +55,19 @@ public class PathfindingTest : MonoBehaviour
         GetComponent<LineRenderer>().SetPositions(pathPoints.ToArray());
     }
 
+    [ContextMenu("Clear")]
+    public void Clear()
+    {
+        graph = null;
+        GetComponent<LineRenderer>().positionCount = 0;
+    }
 
-    private void OnDrawGizmosSelected()
+
+    private void OnDrawGizmos()
     {
         Update();
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, target.position);
+        Gizmos.DrawLine(start.position, target.position);
         Gizmos.color = Color.red;
         foreach (var hit in hits)
         {
@@ -86,10 +88,12 @@ public class PathfindingTest : MonoBehaviour
 
     void Update()
     {
+        if (!start) return;
+        if (!target) return;
         hits = new List<NavmeshHit>();
-        var dir = (target.position - transform.position).normalized;
+        var dir = (target.position - start.position).normalized;
         Physics.queriesHitBackfaces = true;
-        var pos = transform.position;
+        var pos = start.position;
 
         //prevent infinite loops
         int maxRaycasts = 100;
@@ -101,14 +105,9 @@ public class PathfindingTest : MonoBehaviour
             hits.Add(new NavmeshHit(hit));
             //adding small offset from last point to prevent raycasting on the same face
             pos = hit.point + dir * 0.0001f;
-            if (Vector3.Distance(pos, target.position) < 0.5f) break;
+            if (Vector3.Distance(pos, start.position) < 0.5f) break;
             if (maxRaycasts <= 0) break;
         }
-    }
-
-    private void OnDrawGizmos()
-    {
-        
     }
 }
 

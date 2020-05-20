@@ -53,6 +53,12 @@ public class NodesGenerator : MonoBehaviour
         collider.enabled = true;
     }
 
+    public void Clear()
+    {
+        grid = null;
+        GetComponent<MeshFilter>().sharedMesh = null;
+        GetComponent<MeshCollider>().sharedMesh = null;
+    }
 
 
     private void OnValidate()
