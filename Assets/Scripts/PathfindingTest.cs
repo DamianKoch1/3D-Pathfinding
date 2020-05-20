@@ -29,10 +29,23 @@ public class PathfindingTest : MonoBehaviour
 
     private Vector3 prevPosition;
 
-    [ContextMenu("Build Graph")]
-    public void BuildGraph()
+    [ContextMenu("Force build graph")]
+    private void ForceBuildGraph()
     {
         graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
+    }
+
+
+    public void BuildGraph()
+    {
+        if (targetMesh.sharedMesh.vertexCount > 15000)
+        {
+            Debug.LogError("Mesh has over 15.000 vertices. Consider splitting it up to reduce graph building time.");
+        }
+        else
+        {
+            graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
+        }
     }
 
     //TODO fix path walking on mesh between wrong hits if start is inside mesh

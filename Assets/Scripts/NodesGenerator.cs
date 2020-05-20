@@ -104,7 +104,7 @@ public class NodesGenerator : MonoBehaviour
     [ContextMenu("RandomizeObstacles")]
     public void RandomizeObstacles()
     {
-        if (!obstacleSettings.generate)
+        if (!obstacleSettings || !obstacleSettings.generate)
         {
             while (obstacles.childCount > 0)
             {

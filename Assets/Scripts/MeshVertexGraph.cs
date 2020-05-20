@@ -59,10 +59,11 @@ public class MeshVertexGraph
         var startNode = GetClosestNode(start);
         var endNode = GetClosestNode(end);
 
-        Stack<Vector3> path = new Stack<Vector3>();
+        var startCapacity = nodes.Count / 10;
+        Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-        List<Node> openNodes = new List<Node>();
-        List<Node> closedNodes = new List<Node>();
+        List<Node> openNodes = new List<Node>(startCapacity);
+        List<Node> closedNodes = new List<Node>(startCapacity);
 
         Node current = startNode;
         openNodes.Add(startNode);

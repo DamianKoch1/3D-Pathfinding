@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 53333cedd39cb0c4fb748797ad1287d6, type: 3}
-  m_Name: Grid
+  m_Name: NoiseGrid
   m_EditorClassIdentifier: 
   drawNodes: 0
-  color: {r: 0, g: 1, b: 0, a: 1}
+  color: {r: 0.087417364, g: 1, b: 0, a: 1}
   size: {x: 100, y: 100, z: 100}
-  isoLevel: 0.583
+  isoLevel: 0.5
   allowDiagonalNeighbours: 1
-  step: {x: 5, y: 5, z: 5}
+  step: {x: 7, y: 7, z: 7}
   chunkSize: {x: 0, y: 0, z: 0}
   chunkCount: {x: 0, y: 0, z: 0}
-  mode: 0
-  navMeshOffset: 2.56
-  scale: 0.001
-  seed: 0
+  mode: 1
+  navMeshOffset: 0
+  scale: 0.0239
+  seed: 6042
   useRandomSeed: 0
