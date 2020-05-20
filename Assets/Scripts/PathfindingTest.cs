@@ -21,6 +21,9 @@ public class PathfindingTest : MonoBehaviour
 
     private MeshVertexGraph graph;
 
+    [SerializeField, Range(0.1f, 5)]
+    private float minRecalculateMovement = 1;
+
     [SerializeField]
     private PathfindingSettings settings;
 
@@ -32,25 +35,31 @@ public class PathfindingTest : MonoBehaviour
         graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
     }
 
+    //TODO fix path walking on mesh between wrong hits if start is inside mesh
     [ContextMenu("Find path")]
     public void FindPath()
     {
         if (graph == null) return;
-        if (hits.Count <= 1) return;
+        var lr = GetComponent<LineRenderer>();
         var pathPoints = new List<Vector3>();
         pathPoints.Add(start.position);
-        pathPoints.Add(hits[0].point);
-        for (int i = 0; i < hits.Count; i += 2)
+        if (hits.Count > 0)
         {
-            pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
-            if (i + 2 < hits.Count)
+            pathPoints.Add(hits[0].point);
+            if (hits.Count > 1)
             {
-                pathPoints.Add(hits[i + 2].point);
+                for (int i = 0; i < hits.Count - 1; i += 2)
+                {
+                    pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
+                    if (i + 2 < hits.Count)
+                    {
+                        pathPoints.Add(hits[i + 2].point);
+                    }
+                }
+                pathPoints.Add(hits[hits.Count - 1].point);
             }
         }
-        pathPoints.Add(hits[hits.Count - 1].point);
         pathPoints.Add(target.position);
-        var lr = GetComponent<LineRenderer>();
         lr.positionCount = pathPoints.Count;
         GetComponent<LineRenderer>().SetPositions(pathPoints.ToArray());
     }
@@ -66,6 +75,13 @@ public class PathfindingTest : MonoBehaviour
     private void OnDrawGizmos()
     {
         Update();
+
+        if (Vector3.Distance(start.position, prevPosition) >= minRecalculateMovement)
+        {
+            prevPosition = start.position;
+            FindPath();
+        }
+
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(start.position, target.position);
         Gizmos.color = Color.red;
@@ -76,7 +92,7 @@ public class PathfindingTest : MonoBehaviour
 
         if (graph != null)
         {
-            
+
             Gizmos.color = Color.green;
             foreach (var node in graph.nodes.Values)
             {
