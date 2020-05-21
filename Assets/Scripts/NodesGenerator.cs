@@ -37,7 +37,13 @@ public class NodesGenerator : MonoBehaviour
         switch (gridSettings.mode)
         {
             case Mode.Overlap:
-                GetIsoValue = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0 ? 1 : 0;
+                //GetIsoValue = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0 ? 1 : 0;
+                GetIsoValue = (Vector3 pos) =>
+                {
+                    var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset);
+                    if (overlaps.Length == 0) return 1;
+                    return Vector3.Distance(pos, overlaps[0].ClosestPoint(pos)) / gridSettings.navMeshOffset;
+                };
                 break;
             case Mode.Noise:
                 if (gridSettings.useRandomSeed)
@@ -77,15 +83,17 @@ public class NodesGenerator : MonoBehaviour
         {
             GenerateGrid();
         }
+
+        var lr = GetComponent<LineRenderer>();
+        var pathPoints = new List<Vector3>();
         var color = Random.ColorHSV();
-        var path = grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel);
-        var pathPos = path.Pop();
-        Debug.DrawLine(start.position, pathPos, color, drawDuration);
-        while (path.Count > 0)
-        {
-            Debug.DrawLine(pathPos, path.Peek(), color, drawDuration);
-            pathPos = path.Pop();
-        }
+
+        pathPoints.Add(start.position);
+
+        pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
+
+        lr.positionCount = pathPoints.Count;
+        lr.SetPositions(pathPoints.ToArray());
     }
 
     private void OnDrawGizmos()

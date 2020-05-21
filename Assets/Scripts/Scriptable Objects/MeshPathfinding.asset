@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: MeshPathfinding
   m_EditorClassIdentifier: 
-  manhattanDistance: 0
+  manhattanDistance: 1
   benchmark: 1

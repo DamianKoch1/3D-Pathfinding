@@ -74,7 +74,7 @@ public class PathfindingTest : MonoBehaviour
         }
         pathPoints.Add(target.position);
         lr.positionCount = pathPoints.Count;
-        GetComponent<LineRenderer>().SetPositions(pathPoints.ToArray());
+        lr.SetPositions(pathPoints.ToArray());
     }
 
     [ContextMenu("Clear")]
