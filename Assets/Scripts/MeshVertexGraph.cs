@@ -101,7 +101,7 @@ public class MeshVertexGraph
 
         if (!closedNodes.Contains(endNode))
         {
-            return null;
+            return path;
         }
 
         Node temp = current;

@@ -24,9 +24,9 @@ public static class MarchingCubes
                         var edge1 = Triangulation[cellType, i + 1];
                         var edge2 = Triangulation[cellType, i + 2];
 
-                        Vector3 a = Interp(edge0, GetEdgeCornerAValue(grid, x, y, z, edge0), GetEdgeCornerBValue(grid, x, y, z, edge0), isoLevel);
-                        Vector3 b = Interp(edge1, GetEdgeCornerAValue(grid, x, y, z, edge1), GetEdgeCornerBValue(grid, x, y, z, edge1), isoLevel);
-                        Vector3 c = Interp(edge2, GetEdgeCornerAValue(grid, x, y, z, edge2), GetEdgeCornerBValue(grid, x, y, z, edge2), isoLevel);
+                        Vector3 a = Interp(edge0, GetEdgeCornerIsoValue(grid, x, y, z, edge0, 0), GetEdgeCornerIsoValue(grid, x, y, z, edge0, 1), isoLevel);
+                        Vector3 b = Interp(edge1, GetEdgeCornerIsoValue(grid, x, y, z, edge1, 0), GetEdgeCornerIsoValue(grid, x, y, z, edge1, 1), isoLevel);
+                        Vector3 c = Interp(edge2, GetEdgeCornerIsoValue(grid, x, y, z, edge2, 0), GetEdgeCornerIsoValue(grid, x, y, z, edge2, 1), isoLevel);
 
                         a = Vector3.Scale(a, grid.step) + pos;
                         b = Vector3.Scale(b, grid.step) + pos;
@@ -59,80 +59,39 @@ public static class MarchingCubes
         return mesh;
     }
 
-    public static float GetEdgeCornerAValue(Grid grid, int x, int y, int z, int edgeIndex)
+    /// <summary>
+    /// Gets the iso value of a certain corner in a grid
+    /// </summary>
+    /// <param name="grid">source grid</param>
+    /// <param name="x">index of grid node</param>
+    /// <param name="y">index of grid node</param>
+    /// <param name="z">index of grid node</param>
+    /// <param name="edgeIndex">index of edge</param>
+    /// <param name="cornerEdge">index of edge corner (0 / 1)</param>
+    /// <returns></returns>
+    public static float GetEdgeCornerIsoValue(Grid grid, int x, int y, int z, int edgeIndex, int cornerEdge)
     {
-        x += CubeCorners[EdgeCornerA[edgeIndex]].x;
+        Vector3Int corner = CubeCorners[EdgeCornerIdx[edgeIndex, cornerEdge]];
+        x += corner.x;
         if (x >= grid.maxX) return 0;
-        y += CubeCorners[EdgeCornerA[edgeIndex]].y;
+        y += corner.y;
         if (y >= grid.maxY) return 0;
-        z += CubeCorners[EdgeCornerA[edgeIndex]].z;
-        if (z >= grid.maxZ) return 0;
-        return grid.nodes[x, y, z].isoValue;
-    }
-
-    public static float GetEdgeCornerBValue(Grid grid, int x, int y, int z, int edgeIndex)
-    {
-        x += CubeCorners[EdgeCornerB[edgeIndex]].x;
-        if (x >= grid.maxX) return 0;
-        y += CubeCorners[EdgeCornerB[edgeIndex]].y;
-        if (y >= grid.maxY) return 0;
-        z += CubeCorners[EdgeCornerB[edgeIndex]].z;
+        z += corner.z;
         if (z >= grid.maxZ) return 0;
         return grid.nodes[x, y, z].isoValue;
     }
 
     public static Vector3 Interp(int cubeEdge, float a, float b, float isoLevel)
     {
-        var p0 = CubeCorners[EdgeCornerA[cubeEdge]];
-        if (a == b) return p0; 
-        var p1 = CubeCorners[EdgeCornerB[cubeEdge]];
+        Vector3 p0 = CubeCorners[EdgeCornerIdx[cubeEdge, 0]];
+        if (a == b) return p0;
+        Vector3 p1 = CubeCorners[EdgeCornerIdx[cubeEdge, 1]];
         float t = Mathf.Min(Mathf.Max(0, (isoLevel - a) / (b - a)), 1);
-        return p0 + t * (Vector3)(p1 - p0);
+        return p0 + t * (p1 - p0);
     }
 
-    public static Vector3Int[] CubeCorners = new Vector3Int[8]
-    {
-        new Vector3Int(0, 0, 0),
-        new Vector3Int(1, 0, 0),
-        new Vector3Int(1, 0, 1),
-        new Vector3Int(0, 0, 1),
-                  
-        new Vector3Int(0, 1, 0),
-        new Vector3Int(1, 1, 0),
-        new Vector3Int(1, 1, 1),
-        new Vector3Int(0, 1, 1)
-    };
 
-
-    public static Vector3[] CubeEdges = new Vector3[12]
-    {
-        new Vector3(0.5f, 0, 0),
-        new Vector3(1,    0, 0.5f),
-        new Vector3(0.5f, 0, 1),
-        new Vector3(0,    0, 0.5f),
-
-        new Vector3(0.5f, 1, 0),
-        new Vector3(1,    1, 0.5f),
-        new Vector3(0.5f, 1, 1),
-        new Vector3(0,    1, 0.5f),
-
-        new Vector3(0, 0.5f, 0),
-        new Vector3(1, 0.5f, 0),
-        new Vector3(1, 0.5f, 1),
-        new Vector3(0, 0.5f, 1)
-    };
-
-    //    c7--------c6
-    //   /|         /|
-    //  / |        / |
-    // c4---e4---c5  |
-    // |  |       |  |
-    // e8 c3------|-c2
-    // | /        | /
-    // |/         |/
-    // c0---e0---c1
-
-    public static int GetCellType(Grid grid, int x, int y, int z, float isoLevel = 0.5f)
+    public static int GetCellType(Grid grid, int x, int y, int z, float isoLevel)
     {
         //0 - 255
         int cellType = 0;

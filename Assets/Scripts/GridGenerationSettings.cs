@@ -26,7 +26,7 @@ public class GridGenerationSettings : ScriptableObject
     public Mode mode;
 
     [Header("Overlap settings")]
-    [Range(0, 5)]
+    [Range(0, 10)]
     public float navMeshOffset;
 
     [Header("Noise settings")]

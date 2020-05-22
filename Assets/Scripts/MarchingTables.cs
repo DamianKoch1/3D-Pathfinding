@@ -267,19 +267,50 @@ public static class MarchingTables
         {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
     };
 
-    /// <summary>
-    /// Cube corner index a of cube edge index, can be used for interpolation
-    /// </summary>
-    public static int[] EdgeCornerA = new int[12]
-    {
-        0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3
-    };
+    //    c7--------c6
+    //   /|         /|
+    //  / |        / |
+    // c4---e4---c5  |
+    // |  |       |  |
+    // e8 c3------|-c2
+    // | /        | /
+    // |/         |/
+    // c0---e0---c1
 
     /// <summary>
-    /// Cube corner index b of cube edge index, can be used for interpolation
+    /// Local position of cube corners
     /// </summary>
-    public static int[] EdgeCornerB = new int[12]
+    public static Vector3Int[] CubeCorners = new Vector3Int[8]
     {
-        1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7
+        new Vector3Int(0, 0, 0),
+        new Vector3Int(1, 0, 0),
+        new Vector3Int(1, 0, 1),
+        new Vector3Int(0, 0, 1),
+
+        new Vector3Int(0, 1, 0),
+        new Vector3Int(1, 1, 0),
+        new Vector3Int(1, 1, 1),
+        new Vector3Int(0, 1, 1)
+    };
+    
+
+
+    /// <summary>
+    /// Size 2 array with both edge corner indices for each 12 edges
+    /// </summary>
+    public static int[,] EdgeCornerIdx = new int[12, 2]
+    {
+        { 0, 1},
+        { 1, 2},
+        { 2, 3},
+        { 3, 0},
+        { 4, 5},
+        { 5, 6},
+        { 6, 7},
+        { 7, 4},
+        { 0, 4},
+        { 1, 5},
+        { 2, 6},
+        { 3, 7}
     };
 }

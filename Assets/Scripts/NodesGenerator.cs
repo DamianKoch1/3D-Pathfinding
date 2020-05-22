@@ -1,6 +1,7 @@
 ﻿using SimplexNoise;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -37,12 +38,12 @@ public class NodesGenerator : MonoBehaviour
         switch (gridSettings.mode)
         {
             case Mode.Overlap:
-                //GetIsoValue = (Vector3 pos) => Physics.OverlapSphere(pos, gridSettings.navMeshOffset).Length == 0 ? 1 : 0;
                 GetIsoValue = (Vector3 pos) =>
                 {
                     var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset);
                     if (overlaps.Length == 0) return 1;
-                    return Vector3.Distance(pos, overlaps[0].ClosestPoint(pos)) / gridSettings.navMeshOffset;
+                    var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
+                    return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
                 };
                 break;
             case Mode.Noise:
@@ -64,15 +65,13 @@ public class NodesGenerator : MonoBehaviour
         grid = null;
         GetComponent<MeshFilter>().sharedMesh = null;
         GetComponent<MeshCollider>().sharedMesh = null;
+        GetComponent<LineRenderer>().positionCount = 0;
     }
 
 
     private void OnValidate()
     {
-        if (gridSettings.onValidate != OnValidate)
-        {
-            gridSettings.onValidate = OnValidate;
-        }
+        gridSettings.onValidate = OnValidate;
         GenerateGrid();
         MarchCubes();
     }

@@ -17,7 +17,7 @@ MonoBehaviour:
   size: {x: 100, y: 100, z: 100}
   isoLevel: 0.5
   allowDiagonalNeighbours: 1
-  step: {x: 7, y: 7, z: 7}
+  step: {x: 4, y: 4, z: 4}
   chunkSize: {x: 0, y: 0, z: 0}
   chunkCount: {x: 0, y: 0, z: 0}
   mode: 1
