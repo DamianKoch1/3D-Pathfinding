@@ -10,34 +10,68 @@ public class OctreeGeneratorEditor : Editor
     {
         DrawDefaultInspector();
 
-        if (GUILayout.Button("Randomize Obstacles"))
+        var generator = (NodesGenerator)target;
+
+        if (generator.obstacleSettings)
         {
-            ((NodesGenerator)target).RandomizeObstacles();
+            if (GUILayout.Button("Randomize Obstacles"))
+            {
+                generator.RandomizeObstacles();
+            }
         }
+
+        if (GUILayout.Button("Generate Chunks"))
+        {
+            generator.GenerateChunks();
+        }
+
+        if (generator.chunks == null)
+        {
+            GUI.enabled = false;
+        }
+
+        if (generator.hasOutOfRangeChunks)
+        {
+            if (GUILayout.Button("Clear out of range chunks"))
+            {
+                generator.ClearOutOfRangeChunks();
+            }
+        }
+
 
         if (GUILayout.Button("Rebuild Grid"))
         {
-            ((NodesGenerator)target).GenerateGrid();
+            generator.GenerateGrid();
+        }
+
+        if (!generator.hasGrid)
+        {
+            GUI.enabled = false;
         }
 
         if (GUILayout.Button("Expand Meshes"))
         {
-            ((NodesGenerator)target).ExpandMeshes();
+            generator.ExpandMeshes();
         }
 
         if (GUILayout.Button("March Cubes"))
         {
-            ((NodesGenerator)target).MarchCubes();
+            generator.MarchCubes();
         }
 
+        if (!generator.start || !generator.end)
+        {
+            GUI.enabled = false;
+        }
         if (GUILayout.Button("Find Path"))
         {
-            ((NodesGenerator)target).FindPath(10);
+            generator.FindPath();
         }
+        GUI.enabled = true;
 
         if (GUILayout.Button("Clear"))
         {
-            ((NodesGenerator)target).Clear();
+            generator.Clear();
         }
     }
 }

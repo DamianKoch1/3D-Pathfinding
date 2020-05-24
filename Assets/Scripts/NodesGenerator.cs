@@ -7,110 +7,164 @@ using UnityEngine;
 
 public class NodesGenerator : MonoBehaviour
 {
-    [SerializeField]
-    private GridGenerationSettings gridSettings;
+    public GridGenerationSettings gridSettings;
 
-    [SerializeField]
-    private ObstacleGenerationSettings obstacleSettings;
+    public ObstacleGenerationSettings obstacleSettings;
 
-    [SerializeField]
-    private PathfindingSettings pathfindingSettings;
+    public PathfindingSettings pathfindingSettings;
 
-    private Grid grid;
+    public Transform start;
 
-    [SerializeField]
-    private Transform start;
-
-    [SerializeField]
-    private Transform end;
+    public Transform end;
 
     [SerializeField]
     private Transform obstacles;
 
+    [SerializeField]
+    private Vector3Int chunkCount;
 
+    [SerializeField]
+    private Chunk chunkPrefab;
 
-    [ContextMenu("Generate Grid")]
-    public void GenerateGrid()
+    public Chunk[,,] chunks;
+
+    public bool autoGenerate;
+
+    //Can't destroy chunks from OnValidate in edit mode
+    [HideInInspector]
+    public bool hasOutOfRangeChunks;
+
+    [HideInInspector]
+    public bool hasGrid;
+
+    public void GenerateChunks()
     {
-        System.Func<Vector3, float> GetIsoValue = null;
-        var collider = GetComponent<MeshCollider>();
-        collider.enabled = false;
-        switch (gridSettings.mode)
+        chunks = new Chunk[chunkCount.x, chunkCount.y, chunkCount.z];
+        foreach (var chunk in GetComponentsInChildren<Chunk>())
         {
-            case Mode.Overlap:
-                GetIsoValue = (Vector3 pos) =>
-                {
-                    var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset);
-                    if (overlaps.Length == 0) return 1;
-                    var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
-                    return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
-                };
-                break;
-            case Mode.Noise:
-                if (gridSettings.useRandomSeed)
-                {
-                    gridSettings.seed = Random.Range(0, 10000);
-                    Noise.Seed = gridSettings.seed;
-                }
-                GetIsoValue = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) / 255f;
-                break;
-        }
+            bool outOfXRange = chunk.x >= chunkCount.x;
+            bool outOfYRange = chunk.y >= chunkCount.y;
+            bool outOfZRange = chunk.z >= chunkCount.z;
 
-        grid = new Grid(transform.position, gridSettings, GetIsoValue);
-        collider.enabled = true;
-    }
-
-    public void Clear()
-    {
-        grid = null;
-        GetComponent<MeshFilter>().sharedMesh = null;
-        GetComponent<MeshCollider>().sharedMesh = null;
-        GetComponent<LineRenderer>().positionCount = 0;
-    }
-
-
-    private void OnValidate()
-    {
-        gridSettings.onValidate = OnValidate;
-        GenerateGrid();
-        MarchCubes();
-    }
-
-    public void FindPath(float drawDuration = 0)
-    {
-        if (grid == null)
-        {
-            GenerateGrid();
-        }
-
-        var lr = GetComponent<LineRenderer>();
-        var pathPoints = new List<Vector3>();
-        var color = Random.ColorHSV();
-
-        pathPoints.Add(start.position);
-
-        pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
-
-        lr.positionCount = pathPoints.Count;
-        lr.SetPositions(pathPoints.ToArray());
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawWireCube(transform.position, gridSettings.size);
-        if (grid != null)
-        {
-            if (gridSettings.drawNodes)
+            if (outOfXRange || outOfYRange || outOfZRange)
             {
-                grid.DrawGizmos(gridSettings.color, gridSettings.isoLevel);
+                hasOutOfRangeChunks = true;
+                continue;
+            }
+            chunks[chunk.x, chunk.y, chunk.z] = chunk;
+        }
+
+        for (int x = 0; x < chunkCount.x; x++)
+        {
+            for (int y = 0; y < chunkCount.y; y++)
+            {
+                for (int z = 0; z < chunkCount.z; z++)
+                {
+                    if (chunks[x, y, z] == null)
+                    {
+                        var chunk = Instantiate(chunkPrefab.gameObject, transform).GetComponent<Chunk>();
+                        chunks[x, y, z] = chunk;
+                    }
+                    chunks[x, y, z].Initialize(gridSettings, x, y, z);
+                }
+            }
+        }
+    }
+    public void ClearOutOfRangeChunks()
+    {
+        hasOutOfRangeChunks = false;
+        foreach (var chunk in GetComponentsInChildren<Chunk>())
+        {
+            bool outOfXRange = chunk.x >= chunkCount.x;
+            bool outOfYRange = chunk.y >= chunkCount.y;
+            bool outOfZRange = chunk.z >= chunkCount.z;
+
+            if (outOfXRange || outOfYRange || outOfZRange)
+            {
+                DestroyImmediate(chunk.gameObject);
             }
         }
     }
 
 
-    [ContextMenu("RandomizeObstacles")]
+    public void GenerateGrid()
+    {
+        if (chunks == null) return;
+        foreach (var chunk in chunks)
+        {
+            chunk.GenerateGrid();
+        }
+        for (int x = 0; x < chunkCount.x; x++)
+        {
+            for (int y = 0; y < chunkCount.y; y++)
+            {
+                for (int z = 0; z < chunkCount.z; z++)
+                {
+                    if (x > 0)
+                    {
+                        chunks[x - 1, y, z].grid.xNeighbour = chunks[x, y, z].grid;
+                    }
+
+                    if (y > 0)
+                    {
+                        chunks[x, y - 1, z].grid.yNeighbour = chunks[x, y, z].grid;
+                    }
+
+                    if (z > 0)
+                    {
+                        chunks[x, y, z - 1].grid.zNeighbour = chunks[x, y, z].grid;
+                    }
+                }
+            }
+        }
+        hasGrid = true;
+    }
+
+    public void Clear()
+    {
+        if (chunks == null) return;
+        foreach (var chunk in GetComponentsInChildren<Chunk>())
+        {
+            DestroyImmediate(chunk.gameObject);
+        }
+        GetComponent<LineRenderer>().positionCount = 0;
+        hasGrid = false;
+        chunks = null;
+    }
+
+
+    private void OnValidate()
+    {
+        if (!autoGenerate) return;
+        gridSettings.onValidate = OnValidate;
+        GenerateChunks();
+        GenerateGrid();
+        MarchCubes();
+    }
+
+    public void FindPath()
+    {
+        //if (grid == null)
+        //{
+        //    GenerateGrid();
+        //}
+
+        //var lr = GetComponent<LineRenderer>();
+        //var pathPoints = new List<Vector3>();
+        //var color = Random.ColorHSV();
+
+        //pathPoints.Add(start.position);
+
+        //pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
+
+        //lr.positionCount = pathPoints.Count;
+        //lr.SetPositions(pathPoints.ToArray());
+    }
+
+
     public void RandomizeObstacles()
     {
+        if (!obstacles) return;
         if (!obstacleSettings || !obstacleSettings.generate)
         {
             while (obstacles.childCount > 0)
@@ -142,9 +196,9 @@ public class NodesGenerator : MonoBehaviour
         {
             child.position = obstacles.position + new Vector3
                 (
-                    Random.Range(-gridSettings.size.x / 2, gridSettings.size.x / 2),
-                    Random.Range(-gridSettings.size.y / 2, gridSettings.size.y / 2),
-                    Random.Range(-gridSettings.size.z / 2, gridSettings.size.z / 2)
+                    Random.Range(-gridSettings.chunkSize.x / 2, gridSettings.chunkSize.x / 2),
+                    Random.Range(-gridSettings.chunkSize.y / 2, gridSettings.chunkSize.y / 2),
+                    Random.Range(-gridSettings.chunkSize.z / 2, gridSettings.chunkSize.z / 2)
                 );
             child.rotation = Random.rotation;
             child.localScale = new Vector3
@@ -159,53 +213,19 @@ public class NodesGenerator : MonoBehaviour
 
     public void ExpandMeshes()
     {
-        var combine = new List<CombineInstance>();
-        var filter = GetComponent<MeshFilter>();
-        var collider = GetComponent<MeshCollider>();
-        collider.enabled = false;
-        foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.size / 2))
+        if (chunks == null) return;
+        foreach (var chunk in chunks)
         {
-            var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
-            if (!mesh) continue;
-            var scale = obj.transform.lossyScale;
-            var newMesh = new Mesh();
-            var verts = mesh.vertices;
-            for (int i = 0; i < verts.Length; i++)
-            {
-                verts[i] += new Vector3
-                    (
-                        Mathf.Sign(verts[i].x) / scale.x,
-                        Mathf.Sign(verts[i].y) / scale.y,
-                        Mathf.Sign(verts[i].z) / scale.z
-                    ) * gridSettings.navMeshOffset;
-                verts[i] = obj.transform.localToWorldMatrix.MultiplyPoint3x4(verts[i]);
-                verts[i] -= transform.position;
-            }
-            newMesh.vertices = verts;
-            newMesh.triangles = mesh.triangles;
-            combine.Add(new CombineInstance() { mesh = newMesh });
+            chunk.ExpandMeshes();
         }
-        var combinedMesh = new Mesh();
-        combinedMesh.CombineMeshes(combine.ToArray(), true, false);
-        combinedMesh.RecalculateNormals();
-        combinedMesh.Optimize();
-        filter.mesh = combinedMesh;
-        collider.enabled = true;
-        collider.sharedMesh = combinedMesh;
     }
 
     public void MarchCubes()
     {
-        var filter = GetComponent<MeshFilter>();
-        var collider = GetComponent<MeshCollider>();
-        filter.sharedMesh = null;
-        collider.sharedMesh = null;
-        if (grid == null)
+        if (chunks == null) return;
+        foreach (var chunk in chunks)
         {
-            GenerateGrid();
+            chunk.MarchCubes();
         }
-        var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
-        filter.mesh = mesh;
-        collider.sharedMesh = mesh;
     }
 }

@@ -10,12 +10,12 @@ public static class MarchingCubes
         var mesh = new Mesh();
         List<Vector3> verts = new List<Vector3>();
         List<int> tris = new List<int>();
-        var pos = -grid.size / 2;
-        for (int x = 0; x < grid.maxX - 1; x++)
+        var pos = -grid.extents / 2;
+        for (int x = 0; x < grid.xSize; x++)
         {
-            for (int y = 0; y < grid.maxY - 1; y++)
+            for (int y = 0; y < grid.ySize; y++)
             {
-                for (int z = 0; z < grid.maxZ - 1; z++)
+                for (int z = 0; z < grid.zSize; z++)
                 {
                     int cellType = GetCellType(grid, x, y, z, isoLevel);
                     for (int i = 0; Triangulation[cellType, i] != -1; i += 3)
@@ -43,10 +43,10 @@ public static class MarchingCubes
 
                     pos.z += grid.step.z;
                 }
-                pos.z = -grid.size.z / 2;
+                pos.z = -grid.extents.z / 2;
                 pos.y += grid.step.y;
             }
-            pos.y = -grid.size.y / 2;
+            pos.y = -grid.extents.y / 2;
             pos.x += grid.step.x;
         }
 
@@ -73,12 +73,9 @@ public static class MarchingCubes
     {
         Vector3Int corner = CubeCorners[EdgeCornerIdx[edgeIndex, cornerEdge]];
         x += corner.x;
-        if (x >= grid.maxX) return 0;
         y += corner.y;
-        if (y >= grid.maxY) return 0;
         z += corner.z;
-        if (z >= grid.maxZ) return 0;
-        return grid.nodes[x, y, z].isoValue;
+        return grid[x, y, z];
     }
 
     public static Vector3 Interp(int cubeEdge, float a, float b, float isoLevel)
@@ -95,35 +92,35 @@ public static class MarchingCubes
     {
         //0 - 255
         int cellType = 0;
-        if (grid.nodes[x, y, z].isoValue < isoLevel)
+        if (grid[x, y, z] < isoLevel)
         {
             cellType |= 1;
         }
-        if (grid.nodes[x + 1, y, z].isoValue < isoLevel)
+        if (grid[x + 1, y, z] < isoLevel)
         {
             cellType |= 2;
         }
-        if (grid.nodes[x + 1, y, z + 1].isoValue < isoLevel)
+        if (grid[x + 1, y, z + 1] < isoLevel)
         {
             cellType |= 4;
         }
-        if (grid.nodes[x, y, z + 1].isoValue < isoLevel)
+        if (grid[x, y, z + 1] < isoLevel)
         {
             cellType |= 8;
         }
-        if (grid.nodes[x, y + 1, z].isoValue < isoLevel)
+        if (grid[x, y + 1, z] < isoLevel)
         {
             cellType |= 16;
         }
-        if (grid.nodes[x + 1, y + 1, z].isoValue < isoLevel)
+        if (grid[x + 1, y + 1, z] < isoLevel)
         {
             cellType |= 32;
         }
-        if (grid.nodes[x + 1, y + 1, z + 1].isoValue < isoLevel)
+        if (grid[x + 1, y + 1, z + 1] < isoLevel)
         {
             cellType |= 64;
         }
-        if (grid.nodes[x, y + 1, z + 1].isoValue < isoLevel)
+        if (grid[x, y + 1, z + 1] < isoLevel)
         {
             cellType |= 128;
         }

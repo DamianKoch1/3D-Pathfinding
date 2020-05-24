@@ -7,31 +7,43 @@ public class MeshVertexGraph
 {
     public Dictionary<Vector3, Node> nodes;
 
-    public MeshVertexGraph(Mesh mesh, Transform owner)
+    public MeshVertexGraph(MeshFilter filter)
     {
         nodes = new Dictionary<Vector3, Node>();
-        var verts = mesh.vertices;
-        var tris = mesh.triangles;
+        var mesh = filter.sharedMesh;
 
         for (int i = 0; i < mesh.vertices.Length; i++)
         {
             if (nodes.ContainsKey(mesh.vertices[i])) continue;
-            nodes[mesh.vertices[i]] = new Node(owner.localToWorldMatrix.MultiplyPoint3x4(mesh.vertices[i]), 1);
+            nodes[mesh.vertices[i]] = new Node(filter.transform.localToWorldMatrix.MultiplyPoint3x4(mesh.vertices[i]), 1);
         }
 
-
-        for (int i = 0; i < tris.Length; i += 3)
+        for (int i = 0; i < mesh.triangles.Length; i += 3)
         {
-            nodes[verts[tris[i]]].neighbours.Add(nodes[verts[tris[i + 1]]]);
-            nodes[verts[tris[i]]].neighbours.Add(nodes[verts[tris[i + 2]]]);
+            var node0 = GetTriangleNode(mesh, i, 0);
+            var node1 = GetTriangleNode(mesh, i, 1);
+            var node2 = GetTriangleNode(mesh, i, 2);
 
-            nodes[verts[tris[i + 1]]].neighbours.Add(nodes[verts[tris[i]]]);
-            nodes[verts[tris[i + 1]]].neighbours.Add(nodes[verts[tris[i + 2]]]);
+            node0.neighbours.Add(node1);
+            node0.neighbours.Add(node2);
 
-            nodes[verts[tris[i + 2]]].neighbours.Add(nodes[verts[tris[i]]]);
-            nodes[verts[tris[i + 2]]].neighbours.Add(nodes[verts[tris[i + 1]]]);
+            node1.neighbours.Add(node0);
+            node1.neighbours.Add(node2);
 
+            node2.neighbours.Add(node0);
+            node2.neighbours.Add(node1);
         }
+    }
+
+    /// <summary>
+    /// Returns node with position of triangle corner
+    /// </summary>
+    /// <param name="mesh"></param>
+    /// <param name="triangle">triangle index</param>
+    /// <param name="corner">triangle corner index (0 - 2)</param>
+    private Node GetTriangleNode(Mesh mesh, int triangle, int corner)
+    {
+        return nodes[mesh.vertices[mesh.triangles[triangle + corner]]];
     }
 
     public Node GetClosestNode(Vector3 position)

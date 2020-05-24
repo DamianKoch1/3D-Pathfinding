@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PathfindingTest : MonoBehaviour
@@ -29,23 +30,16 @@ public class PathfindingTest : MonoBehaviour
 
     private Vector3 prevPosition;
 
-    [ContextMenu("Force build graph")]
-    private void ForceBuildGraph()
-    {
-        graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
-    }
+    [SerializeField]
+    private bool drawNodes;
+
+    [SerializeField]
+    private bool drawNeighbours;
 
 
     public void BuildGraph()
     {
-        if (targetMesh.sharedMesh.vertexCount > 15000)
-        {
-            Debug.LogError("Mesh has over 15.000 vertices. Consider splitting it up to reduce graph building time.");
-        }
-        else
-        {
-            graph = new MeshVertexGraph(targetMesh.sharedMesh, targetMesh.transform);
-        }
+        graph = new MeshVertexGraph(targetMesh);
     }
 
     //TODO fix path walking on mesh between wrong hits if start is inside mesh
@@ -105,11 +99,24 @@ public class PathfindingTest : MonoBehaviour
 
         if (graph != null)
         {
-
-            Gizmos.color = Color.green;
-            foreach (var node in graph.nodes.Values)
+            if (drawNodes || drawNeighbours)
             {
-                Gizmos.DrawWireCube(node.pos, Vector3.one * 0.1f);
+                foreach (var node in graph.nodes.Values)
+                {
+                    if (drawNodes)
+                    {
+                        Gizmos.color = Color.green;
+                        Gizmos.DrawWireCube(node.pos, Vector3.one * 0.1f);
+                    }
+                    if (drawNeighbours)
+                    {
+                        Gizmos.color = Color.gray;
+                        foreach (var neighbour in node.neighbours)
+                        {
+                            Gizmos.DrawLine(node.pos, neighbour.pos);
+                        }
+                    }
+                }
             }
         }
     }

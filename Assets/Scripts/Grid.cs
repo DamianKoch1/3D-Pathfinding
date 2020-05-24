@@ -6,18 +6,52 @@ using UnityEngine;
 
 public class Grid
 {
+    /// <summary>
+    /// Used to get iso value of node with corresponding index, checks neighbours if index out of range, 1 if no neighbour
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    public float this[int x, int y, int z]
+    {
+        get
+        {
+            if (x >= xSize)
+            {
+                if (xNeighbour == null) return 1;
+                return xNeighbour[x - xSize, y, z];
+            }
+            if (y >= ySize)
+            {
+                if (yNeighbour == null) return 1;
+                return yNeighbour[x, y - ySize, z];
+            }
+            if (z >= zSize)
+            {
+                if (zNeighbour == null) return 1;
+                return zNeighbour[x, y, z - zSize];
+            }
+            return nodes[x, y, z].isoValue;
+        }
+    }
 
     public Node[,,] nodes;
 
     public Vector3 center;
 
-    public Vector3 size;
+    public Vector3 extents;
 
     public Vector3 step;
 
-    public int maxX;
-    public int maxY;
-    public int maxZ;
+    public int xSize;
+    public int ySize;
+    public int zSize;
+
+    //preventing chunk gaps
+    public Grid xNeighbour;
+    public Grid yNeighbour;
+    public Grid zNeighbour;
 
     public Grid(Vector3 _center, GridGenerationSettings settings, Func<Vector3, float> GetIsoValue)
     {
@@ -26,36 +60,36 @@ public class Grid
         settings.step.z = Mathf.Max(settings.step.z, 0.5f);
 
         center = _center;
-        size = settings.size;
+        extents = settings.chunkSize;
         step = settings.step;
-        maxX = (int)(size.x / step.x);
-        maxY = (int)(size.y / step.y);
-        maxZ = (int)(size.z / step.z);
+        xSize = (int)(extents.x / step.x);
+        ySize = (int)(extents.y / step.y);
+        zSize = (int)(extents.z / step.z);
 
-        nodes = new Node[maxX, maxY, maxZ];
+        nodes = new Node[xSize, ySize, zSize];
 
-        Vector3 pos = center - size / 2;
-        for (int x = 0; x < maxX; x++)
+        Vector3 pos = center - extents / 2;
+        for (int x = 0; x < xSize; x++)
         {
-            for (int y = 0; y < maxY; y++)
+            for (int y = 0; y < ySize; y++)
             {
-                for (int z = 0; z < maxZ; z++)
+                for (int z = 0; z < zSize; z++)
                 {
                     nodes[x, y, z] = new Node(pos, GetIsoValue(pos), x, y, z);
                     pos.z += step.z;
                 }
-                pos.z = center.z - size.z / 2;
+                pos.z = center.z - extents.z / 2;
                 pos.y += step.y;
             }
-            pos.y = center.y - size.y / 2;
+            pos.y = center.y - extents.y / 2;
             pos.x += step.x;
         }
 
-        for (int x = 0; x < maxX; x++)
+        for (int x = 0; x < xSize; x++)
         {
-            for (int y = 0; y < maxY; y++)
+            for (int y = 0; y < ySize; y++)
             {
-                for (int z = 0; z < maxZ; z++)
+                for (int z = 0; z < zSize; z++)
                 {
                     ref var node = ref nodes[x, y, z];
                     node.neighbours = GetNeighbours(node, settings.allowDiagonalNeighbours);
@@ -79,13 +113,13 @@ public class Grid
         dirZ = Mathf.Clamp(dirZ, -1, 1);
 
         int x = node.iX + dirX;
-        if (x < 0 || x > maxX - 1) return;
+        if (x < 0 || x > xSize - 1) return;
 
         int y = node.iY + dirY;
-        if (y < 0 || y > maxY - 1) return;
+        if (y < 0 || y > ySize - 1) return;
 
         int z = node.iZ + dirZ;
-        if (z < 0 || z > maxZ - 1) return;
+        if (z < 0 || z > zSize - 1) return;
 
         neighbours.Add(nodes[x, y, z]);
     }
@@ -129,17 +163,17 @@ public class Grid
     //TODO error if node isnt walkable, should also find adjacent node closest to target instead, probably insert a temporary node here
     public Node GetClosestNode(Vector3 position)
     {
-        Vector3 startCorner = center - size / 2;
+        Vector3 startCorner = center - extents / 2;
 
 
         int x = Mathf.RoundToInt((position.x - startCorner.x) / step.x);
-        x = Mathf.Clamp(x, 0, maxX - 1);
+        x = Mathf.Clamp(x, 0, xSize - 1);
 
         int y = Mathf.RoundToInt((position.y - startCorner.y) / step.y);
-        y = Mathf.Clamp(y, 0, maxY - 1);
+        y = Mathf.Clamp(y, 0, ySize - 1);
 
         int z = Mathf.RoundToInt((position.z - startCorner.z) / step.z);
-        z = Mathf.Clamp(z, 0, maxZ - 1);
+        z = Mathf.Clamp(z, 0, zSize - 1);
 
         return nodes[x, y, z];
     }
@@ -163,19 +197,21 @@ public class Grid
         var startNode = GetClosestNode(start);
         var endNode = GetClosestNode(end);
 
-        Stack<Vector3> path = new Stack<Vector3>();
+        var startCapacity = nodes.Length / 10;
+        Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-        List<Node> openNodes = new List<Node>();
-        List<Node> closedNodes = new List<Node>();
+        //linkedlist vs list
+        LinkedList<Node> openNodes = new LinkedList<Node>();
+        LinkedList<Node> closedNodes = new LinkedList<Node>();
 
         Node current = startNode;
-        openNodes.Add(startNode);
+        openNodes.AddLast(startNode);
 
         while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
         {
-            current = openNodes[0];
-            openNodes.RemoveAt(0);
-            closedNodes.Add(current);
+            current = openNodes.First();
+            openNodes.RemoveFirst();
+            closedNodes.AddLast(current);
 
             foreach (var neighbour in current.neighbours)
             {
@@ -197,8 +233,8 @@ public class Grid
                                 neighbour.targetDistance = Vector3.Distance(neighbour.pos, endNode.pos);
                             }
                             neighbour.cost = neighbour.previousPathNode.cost + 1;
-                            openNodes.Add(neighbour);
-                            openNodes = openNodes.OrderBy(n => n.F).ToList();
+                            openNodes.AddLast(neighbour);
+                            openNodes = new LinkedList<Node>(openNodes.OrderBy(n => n.F));
                         }
                     }
                 }

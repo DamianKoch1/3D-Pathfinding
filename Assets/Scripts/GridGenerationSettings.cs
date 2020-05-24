@@ -8,9 +8,11 @@ public class GridGenerationSettings : ScriptableObject
 {
     public bool drawNodes;
 
-    public Color color;
+    public bool drawExtents;
 
-    public Vector3 size;
+    public Color nodeColor;
+
+    public Vector3 chunkSize;
 
     [Range(0, 1), Tooltip("Node is walkable if it has iso value above this")]
     public float isoLevel;
@@ -19,11 +21,9 @@ public class GridGenerationSettings : ScriptableObject
 
     public Vector3 step;
 
-    public Vector3 chunkSize;
-
-    public Vector3Int chunkCount;
-
     public Mode mode;
+
+    public LayerMask navmeshLayer;
 
     [Header("Overlap settings")]
     [Range(0, 10)]

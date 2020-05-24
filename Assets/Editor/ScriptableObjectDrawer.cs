@@ -21,13 +21,13 @@ public class ScriptableObjectDrawer : PropertyDrawer
 
         if (property.isExpanded)
         {
-            EditorGUI.indentLevel++;
-
             if (!editor)
             {
                 Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
+                if (!editor) return;
             }
-            if (!editor) return;
+            EditorGUI.indentLevel++;
+
             editor.OnInspectorGUI();
 
             EditorGUI.indentLevel--;

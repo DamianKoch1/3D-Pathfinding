@@ -10,9 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 708539449575241504}
   - component: {fileID: 708539449575241505}
-  - component: {fileID: 708539449575241506}
-  - component: {fileID: 708539449575241507}
-  - component: {fileID: 708539449575241508}
   - component: {fileID: 708539449575241519}
   m_Layer: 8
   m_Name: NavmeshGenerator
@@ -54,65 +51,9 @@ MonoBehaviour:
   start: {fileID: 0}
   end: {fileID: 0}
   obstacles: {fileID: 0}
---- !u!23 &708539449575241506
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 708539449575241509}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 8199b905c768f894c86f01c29eca18b7, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
---- !u!33 &708539449575241507
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 708539449575241509}
-  m_Mesh: {fileID: 0}
---- !u!64 &708539449575241508
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 708539449575241509}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Convex: 0
-  m_CookingOptions: 14
-  m_Mesh: {fileID: 0}
+  chunkCount: {x: 0, y: 0, z: 0}
+  chunkPrefab: {fileID: 1922032870843716596, guid: d7a4f35e7f71e6149aa9d2f912ef412b,
+    type: 3}
 --- !u!120 &708539449575241519
 LineRenderer:
   m_ObjectHideFlags: 0
