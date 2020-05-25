@@ -28,7 +28,11 @@ public class NodesGenerator : MonoBehaviour
 
     public Chunk[,,] chunks;
 
-    public bool autoGenerate;
+    [SerializeField]
+    private bool autoGenerate;
+
+    [SerializeField]
+    public bool visualizePathfinding;
 
     //Can't destroy chunks from OnValidate in edit mode
     [HideInInspector]
@@ -144,23 +148,63 @@ public class NodesGenerator : MonoBehaviour
 
     public void FindPath()
     {
-        //if (grid == null)
-        //{
-        //    GenerateGrid();
-        //}
+        var grid = chunks[0, 0, 0].grid;
+        if (grid == null)
+        {
+            GenerateGrid();
+        }
 
-        //var lr = GetComponent<LineRenderer>();
-        //var pathPoints = new List<Vector3>();
-        //var color = Random.ColorHSV();
+        var lr = GetComponent<LineRenderer>();
+        var pathPoints = new List<Vector3>();
+        var color = Random.ColorHSV();
 
-        //pathPoints.Add(start.position);
+        pathPoints.Add(start.position);
 
-        //pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
+        pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
 
-        //lr.positionCount = pathPoints.Count;
-        //lr.SetPositions(pathPoints.ToArray());
+        lr.positionCount = pathPoints.Count;
+        lr.SetPositions(pathPoints.ToArray());
     }
 
+
+    private void OnDrawGizmos()
+    {
+        VisualizePathfinding();
+    }
+
+    private void VisualizePathfinding()
+    {
+        if (!visualizePathfinding) return;
+        if (chunks == null) return;
+        var grid = chunks[0, 0, 0].grid;
+        if (grid == null) return;
+        if (grid.openNodes == null) return;
+        if (grid.closedNodes == null) return;
+        var lowestF = grid.closedNodes.OrderBy(n => n.F).First().F;
+        float highestF = 0;
+        if (grid.openNodes.Count == 0)
+        {
+            highestF = grid.closedNodes.OrderBy(n => n.F).Last().F;
+        }
+        else
+        {
+            highestF = grid.openNodes.Last().F;
+        }
+
+        foreach (var node in grid.openNodes)
+        {
+            Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.DrawCube(node.pos, Vector3.one);
+        }
+        if (grid.closedNodes != null)
+        {
+            foreach (var node in grid.closedNodes)
+            {
+                Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
+                Gizmos.DrawCube(node.pos, Vector3.one * 2);
+            }
+        }
+    }
 
     public void RandomizeObstacles()
     {

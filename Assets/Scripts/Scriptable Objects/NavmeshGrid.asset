@@ -24,6 +24,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   navMeshOffset: 6.02
-  scale: 0.001
+  scale: 0.0101
   seed: 0
   useRandomSeed: 0

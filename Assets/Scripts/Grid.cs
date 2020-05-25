@@ -178,8 +178,27 @@ public class Grid
         return nodes[x, y, z];
     }
 
+
+    public void ResetNodes()
+    {
+        foreach (var node in nodes)
+        {
+            if (node.F !=  -1)
+            {
+                node.cost = -1;
+                node.heuristic = -1;
+            }
+        }
+    }
+
+    public LinkedList<Node> openNodes;
+    public LinkedList<Node> closedNodes;
+    public int neighbourChecks;
     public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)
     {
+        ResetNodes();
+
+        neighbourChecks = 0;
         //distance from start to end
         float distance = 0;
 
@@ -201,10 +220,13 @@ public class Grid
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
         //linkedlist vs list
-        LinkedList<Node> openNodes = new LinkedList<Node>();
-        LinkedList<Node> closedNodes = new LinkedList<Node>();
+        openNodes = new LinkedList<Node>();
+        closedNodes = new LinkedList<Node>();
 
         Node current = startNode;
+        current.costHeuristicBalance = settings.greediness;
+        current.cost = 0;
+        current.heuristic = settings.Heuristic(current.pos, endNode.pos);
         openNodes.AddLast(startNode);
 
         while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
@@ -215,24 +237,17 @@ public class Grid
 
             foreach (var neighbour in current.neighbours)
             {
+                neighbourChecks++;
                 if (neighbour.isoValue > isoLevel)
                 {
                     if (!closedNodes.Contains(neighbour))
                     {
                         if (!openNodes.Contains(neighbour))
                         {
+                            neighbour.costHeuristicBalance = settings.greediness;
                             neighbour.previousPathNode = current;
-                            if (settings.manhattanDistance)
-                            {
-                                neighbour.targetDistance = Mathf.Abs(neighbour.pos.x - endNode.pos.x) 
-                                    + Mathf.Abs(neighbour.pos.y - endNode.pos.y) 
-                                    + Mathf.Abs(neighbour.pos.z - endNode.pos.z);
-                            }
-                            else
-                            {
-                                neighbour.targetDistance = Vector3.Distance(neighbour.pos, endNode.pos);
-                            }
-                            neighbour.cost = neighbour.previousPathNode.cost + 1;
+                            neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
+                            neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
                             openNodes.AddLast(neighbour);
                             openNodes = new LinkedList<Node>(openNodes.OrderBy(n => n.F));
                         }
@@ -259,7 +274,7 @@ public class Grid
         if (settings.benchmark)
         {
             sw.Stop();
-            Debug.Log("Distance: " + distance + ", path length: " + pathLength + " (" + pathLength * 100 / distance + "%), time: " + sw.Elapsed.Milliseconds);
+            Debug.Log("Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
         }
 
         return path;

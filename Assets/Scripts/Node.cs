@@ -9,9 +9,11 @@ public class Node
 
     public Node previousPathNode;
 
-    public float targetDistance = -1;
+    public float heuristic = -1;
 
-    public float cost = 1;
+    public float cost = -1;
+
+    public Vector3Int idx => new Vector3Int(iX, iY, iZ);
 
     public int iX;
     public int iY;
@@ -21,13 +23,15 @@ public class Node
 
     public HashSet<Node> neighbours;
 
+    public float costHeuristicBalance = 0.5f;
+
     public float F
     {
         get
         {
-            if (targetDistance != -1 && cost != -1)
+            if (heuristic != -1 && cost != -1)
             {
-                return targetDistance + cost;
+                return heuristic * costHeuristicBalance + cost * (1 - costHeuristicBalance);
             }
             return -1;
         }

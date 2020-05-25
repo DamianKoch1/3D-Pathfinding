@@ -36,6 +36,8 @@ public class PathfindingTest : MonoBehaviour
     [SerializeField]
     private bool drawNeighbours;
 
+    [SerializeField]
+    private bool visualizePathfinding;
 
     public void BuildGraph()
     {
@@ -83,6 +85,8 @@ public class PathfindingTest : MonoBehaviour
     {
         Update();
 
+        VisualizePathfinding();
+
         if (Vector3.Distance(start.position, prevPosition) >= minRecalculateMovement)
         {
             prevPosition = start.position;
@@ -121,6 +125,37 @@ public class PathfindingTest : MonoBehaviour
         }
     }
 
+    private void VisualizePathfinding()
+    {
+        if (!visualizePathfinding) return;
+        if (graph == null) return;
+        if (graph.openNodes == null) return;
+        if (graph.closedNodes == null) return;
+        var lowestF = graph.closedNodes.OrderBy(n => n.F).First().F;
+        float highestF = 0;
+        if (graph.openNodes.Count == 0)
+        {
+            highestF = graph.closedNodes.OrderBy(n => n.F).Last().F;
+        }
+        else
+        {
+            highestF = graph.openNodes.Last().F;
+        }
+
+        foreach (var node in graph.openNodes)
+        {
+            Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.DrawCube(node.pos, Vector3.one);
+        }
+        if (graph.closedNodes != null)
+        {
+            foreach (var node in graph.closedNodes)
+            {
+                Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
+                Gizmos.DrawCube(node.pos, Vector3.one * 2);
+            }
+        }
+    }
 
     void Update()
     {

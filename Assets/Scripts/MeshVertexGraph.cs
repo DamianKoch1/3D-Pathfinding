@@ -52,8 +52,27 @@ public class MeshVertexGraph
         return orderedNodes.First();
     }
 
+    public void ResetNodes()
+    {
+        foreach (var node in nodes.Values)
+        {
+            if (node.F != -1)
+            {
+                node.cost = -1;
+                node.heuristic = -1;
+            }
+        }
+    }
+
+    public List<Node> openNodes;
+    public List<Node> closedNodes;
+    public int neighbourChecks;
     public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings)
     {
+        neighbourChecks = 0;
+
+        ResetNodes();
+
         //distance from start to end
         float distance = 0;
 
@@ -74,10 +93,13 @@ public class MeshVertexGraph
         var startCapacity = nodes.Count / 10;
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-        List<Node> openNodes = new List<Node>(startCapacity);
-        List<Node> closedNodes = new List<Node>(startCapacity);
+        openNodes = new List<Node>(startCapacity);
+        closedNodes = new List<Node>(startCapacity);
 
         Node current = startNode;
+        current.costHeuristicBalance = settings.greediness;
+        current.cost = 0;
+        current.heuristic = settings.Heuristic(current.pos, endNode.pos);
         openNodes.Add(startNode);
 
         while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
@@ -88,22 +110,15 @@ public class MeshVertexGraph
 
             foreach (var neighbour in current.neighbours)
             {
+                neighbourChecks++;
                 if (!closedNodes.Contains(neighbour))
                 {
                     if (!openNodes.Contains(neighbour))
                     {
+                        neighbour.costHeuristicBalance = settings.greediness;
                         neighbour.previousPathNode = current;
-                        if (settings.manhattanDistance)
-                        {
-                            neighbour.targetDistance = Mathf.Abs(neighbour.pos.x - endNode.pos.x)
-                                + Mathf.Abs(neighbour.pos.y - endNode.pos.y)
-                                + Mathf.Abs(neighbour.pos.z - endNode.pos.z);
-                        }
-                        else
-                        {
-                            neighbour.targetDistance = Vector3.Distance(neighbour.pos, endNode.pos);
-                        }
-                        neighbour.cost = neighbour.previousPathNode.cost + 1;
+                        neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
+                        neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
                         openNodes.Add(neighbour);
                         openNodes = openNodes.OrderBy(n => n.F).ToList();
                     }
@@ -136,7 +151,7 @@ public class MeshVertexGraph
         if (settings.benchmark)
         {
             sw.Stop();
-            Debug.Log("Distance: " + distance + ", path length: " + pathLength + " (" + pathLength * 100 / distance + "%), time: " + sw.Elapsed.Milliseconds);
+            Debug.Log("Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
         }
 
         return path;
