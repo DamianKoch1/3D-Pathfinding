@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class Grid
+public class Grid : INodeGraph
 {
     /// <summary>
     /// Used to get iso value of node with corresponding index, checks neighbours if index out of range, 1 if no neighbour
@@ -35,6 +35,9 @@ public class Grid
             return nodes[x, y, z].isoValue;
         }
     }
+
+    public IEnumerable<Node> Nodes => nodes.Cast<Node>();
+
 
     public Node[,,] nodes;
 
@@ -92,7 +95,7 @@ public class Grid
                 for (int z = 0; z < zSize; z++)
                 {
                     ref var node = ref nodes[x, y, z];
-                    node.neighbours = GetNeighbours(node, settings.allowDiagonalNeighbours);
+                    node.neighbours = StoreNeighbours(node, settings.allowDiagonalNeighbours);
                 }
             }
         }
@@ -124,7 +127,7 @@ public class Grid
         neighbours.Add(nodes[x, y, z]);
     }
 
-    public HashSet<Node> GetNeighbours(Node node, bool includeDiagonal = true)
+    public HashSet<Node> StoreNeighbours(Node node, bool includeDiagonal = true)
     {
         if (node.iX < 0 || node.iY < 0 || node.iZ < 0) return null;
         HashSet<Node> neighbours = new HashSet<Node>();
@@ -194,91 +197,10 @@ public class Grid
     public LinkedList<Node> openNodes;
     public LinkedList<Node> closedNodes;
     public int neighbourChecks;
+
     public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)
     {
-        ResetNodes();
-
-        neighbourChecks = 0;
-        //distance from start to end
-        float distance = 0;
-
-        //full length of path
-        float pathLength = 0;
-
-        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-
-        if (settings.benchmark)
-        {
-            distance = Vector3.Distance(start, end);
-            sw.Start();
-        }
-
-        var startNode = GetClosestNode(start);
-        var endNode = GetClosestNode(end);
-
-        var startCapacity = nodes.Length / 10;
-        Stack<Vector3> path = new Stack<Vector3>(startCapacity);
-
-        //linkedlist vs list
-        openNodes = new LinkedList<Node>();
-        closedNodes = new LinkedList<Node>();
-
-        Node current = startNode;
-        current.costHeuristicBalance = settings.greediness;
-        current.cost = 0;
-        current.heuristic = settings.Heuristic(current.pos, endNode.pos);
-        openNodes.AddLast(startNode);
-
-        while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
-        {
-            current = openNodes.First();
-            openNodes.RemoveFirst();
-            closedNodes.AddLast(current);
-
-            foreach (var neighbour in current.neighbours)
-            {
-                neighbourChecks++;
-                if (neighbour.isoValue > isoLevel)
-                {
-                    if (!closedNodes.Contains(neighbour))
-                    {
-                        if (!openNodes.Contains(neighbour))
-                        {
-                            neighbour.costHeuristicBalance = settings.greediness;
-                            neighbour.previousPathNode = current;
-                            neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
-                            neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
-                            openNodes.AddLast(neighbour);
-                            openNodes = new LinkedList<Node>(openNodes.OrderBy(n => n.F));
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!closedNodes.Contains(endNode))
-        {
-            return null;
-        }
-
-        Node temp = current;
-        path.Push(end);
-        while (temp != null)
-        {
-            pathLength += Vector3.Distance(path.Peek(), temp.pos);
-            path.Push(temp.pos);
-            temp = temp.previousPathNode;
-        }
-        pathLength += Vector3.Distance(path.Peek(), start);
-
-        if (settings.benchmark)
-        {
-            sw.Stop();
-            Debug.Log("Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
-        }
-
-        return path;
-
+        return AStar.FindPath(this, start, end, settings, isoLevel, out neighbourChecks, out openNodes, out closedNodes);
     }
 
 }

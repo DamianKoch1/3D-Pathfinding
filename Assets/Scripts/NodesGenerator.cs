@@ -190,19 +190,15 @@ public class NodesGenerator : MonoBehaviour
         {
             highestF = grid.openNodes.Last().F;
         }
-
+        foreach (var node in grid.closedNodes)
+        {
+            Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.DrawCube(node.pos, Vector3.one * 2);
+        }
         foreach (var node in grid.openNodes)
         {
             Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
             Gizmos.DrawCube(node.pos, Vector3.one);
-        }
-        if (grid.closedNodes != null)
-        {
-            foreach (var node in grid.closedNodes)
-            {
-                Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
-                Gizmos.DrawCube(node.pos, Vector3.one * 2);
-            }
         }
     }
 

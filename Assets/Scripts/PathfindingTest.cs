@@ -141,19 +141,15 @@ public class PathfindingTest : MonoBehaviour
         {
             highestF = graph.openNodes.Last().F;
         }
-
+        foreach (var node in graph.closedNodes)
+        {
+            Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.DrawCube(node.pos, Vector3.one * 2);
+        }
         foreach (var node in graph.openNodes)
         {
             Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
             Gizmos.DrawCube(node.pos, Vector3.one);
-        }
-        if (graph.closedNodes != null)
-        {
-            foreach (var node in graph.closedNodes)
-            {
-                Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
-                Gizmos.DrawCube(node.pos, Vector3.one * 2);
-            }
         }
     }
 

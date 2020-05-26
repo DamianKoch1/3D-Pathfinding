@@ -17,4 +17,4 @@ MonoBehaviour:
   benchmark: 1
   highF: {r: 1, g: 0, b: 0, a: 1}
   lowF: {r: 0, g: 1, b: 0, a: 1}
-  greediness: 0.65
+  greediness: 0.822
