@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: MeshPathfinding
   m_EditorClassIdentifier: 
-  heuristic: 0
+  heuristic: 3
   costIncrease: 1
   benchmark: 1
   highF: {r: 1, g: 0, b: 0, a: 1}
   lowF: {r: 0, g: 1, b: 0, a: 1}
-  greediness: 0.878
+  greediness: 0.612

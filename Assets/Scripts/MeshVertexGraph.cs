@@ -14,13 +14,15 @@ public class MeshVertexGraph : INodeGraph
         nodes = new Dictionary<Vector3, Node>();
         var mesh = filter.sharedMesh;
 
-        for (int i = 0; i < mesh.vertices.Length; i++)
+        var vertexCount = mesh.vertices.Length;
+        for (int i = 0; i < vertexCount; i++)
         {
             if (nodes.ContainsKey(mesh.vertices[i])) continue;
-            nodes[mesh.vertices[i]] = new Node(filter.transform.localToWorldMatrix.MultiplyPoint3x4(mesh.vertices[i]), 1);
+            nodes.Add(mesh.vertices[i], new Node(filter.transform.localToWorldMatrix.MultiplyPoint3x4(mesh.vertices[i]), 1));
         }
 
-        for (int i = 0; i < mesh.triangles.Length; i += 3)
+        var triangleCount = mesh.triangles.Length;
+        for (int i = 0; i < triangleCount; i += 3)
         {
             var node0 = GetTriangleNode(mesh, i, 0);
             var node1 = GetTriangleNode(mesh, i, 1);
@@ -66,8 +68,8 @@ public class MeshVertexGraph : INodeGraph
         }
     }
 
-    public LinkedList<Node> openNodes;
-    public LinkedList<Node> closedNodes;
+    public List<Node> openNodes;
+    public HashSet<Node> closedNodes;
     public int neighbourChecks;
 
    

@@ -16,9 +16,9 @@ MonoBehaviour:
   drawExtents: 0
   nodeColor: {r: 0, g: 1, b: 0.1493411, a: 1}
   chunkSize: {x: 50, y: 50, z: 50}
-  isoLevel: 0.653
+  isoLevel: 0.566
   allowDiagonalNeighbours: 0
-  step: {x: 5, y: 5, z: 5}
+  step: {x: 3, y: 3, z: 3}
   mode: 1
   navmeshLayer:
     serializedVersion: 2

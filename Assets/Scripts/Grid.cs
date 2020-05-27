@@ -194,8 +194,8 @@ public class Grid : INodeGraph
         }
     }
 
-    public LinkedList<Node> openNodes;
-    public LinkedList<Node> closedNodes;
+    public List<Node> openNodes;
+    public HashSet<Node> closedNodes;
     public int neighbourChecks;
 
     public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)

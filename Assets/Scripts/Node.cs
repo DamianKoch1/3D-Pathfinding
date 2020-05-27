@@ -53,5 +53,4 @@ public class Node
         Gizmos.DrawWireCube(pos, Vector3.one * 0.1f);
     }
 
-
 }

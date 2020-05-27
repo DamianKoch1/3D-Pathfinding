@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class AStar
 {
-    public static Stack<Vector3> FindPath(INodeGraph graph,Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel, out int neighbourChecks, out LinkedList<Node> openNodes, out LinkedList<Node> closedNodes)
+    public static Stack<Vector3> FindPath(INodeGraph graph,Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel, out int neighbourChecks, out List<Node> openNodes, out HashSet<Node> closedNodes)
     {
         graph.ResetNodes();
 
@@ -30,21 +30,21 @@ public static class AStar
         var startCapacity = graph.Nodes.Count() / 10;
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-        //linkedlist vs list
-        openNodes = new LinkedList<Node>();
-        closedNodes = new LinkedList<Node>();
+        openNodes = new List<Node>();
+        closedNodes = new HashSet<Node>();
+
 
         Node current = startNode;
         current.costHeuristicBalance = settings.greediness;
         current.cost = 0;
         current.heuristic = settings.Heuristic(current.pos, endNode.pos);
-        openNodes.AddLast(startNode);
+        openNodes.Add(startNode);
 
         while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
         {
-            current = openNodes.First();
-            openNodes.RemoveFirst();
-            closedNodes.AddLast(current);
+            current = openNodes[0];
+            openNodes.RemoveAt(0);
+            closedNodes.Add(current);
 
             foreach (var neighbour in current.neighbours)
             {
@@ -59,8 +59,13 @@ public static class AStar
                             neighbour.previousPathNode = current;
                             neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
                             neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
-                            openNodes.AddLast(neighbour);
-                            openNodes = new LinkedList<Node>(openNodes.OrderBy(n => n.F));
+                            openNodes.Add(neighbour);
+                            openNodes.Sort((n1, n2) =>
+                            {
+                                if (n1.F > n2.F) return 1;
+                                if (n1.F < n2.F) return -1;
+                                return 0;
+                            });
                         }
                     }
                 }
@@ -79,6 +84,7 @@ public static class AStar
             pathLength += Vector3.Distance(path.Peek(), temp.pos);
             path.Push(temp.pos);
             temp = temp.previousPathNode;
+            if (temp == startNode) break;
         }
         pathLength += Vector3.Distance(path.Peek(), start);
 
