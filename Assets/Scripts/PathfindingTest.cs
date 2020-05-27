@@ -39,6 +39,13 @@ public class PathfindingTest : MonoBehaviour
     [SerializeField]
     private bool visualizePathfinding;
 
+
+    private void Start()
+    {
+        BuildGraph();
+        FindPath();
+    }
+
     public void BuildGraph()
     {
         graph = new MeshVertexGraph(targetMesh);

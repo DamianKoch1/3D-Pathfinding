@@ -5,12 +5,11 @@ using UnityEngine;
 
 public static class AStar
 {
-    public static Stack<Vector3> FindPath(INodeGraph graph,Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel, out int neighbourChecks, out List<Node> openNodes, out HashSet<Node> closedNodes)
+    public static Stack<Vector3> FindPath(INodeGraph graph, Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel, out int neighbourChecks, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes)
     {
-        graph.ResetNodes();
-
         neighbourChecks = 0;
-        //distance from start to end
+
+        //euclidean distance from start to end
         float distance = 0;
 
         //full length of path
@@ -30,7 +29,8 @@ public static class AStar
         var startCapacity = graph.Nodes.Count() / 10;
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-        openNodes = new List<Node>();
+        //much faster .Contains than list
+        openNodes = new SortedSet<Node>();
         closedNodes = new HashSet<Node>();
 
 
@@ -42,9 +42,10 @@ public static class AStar
 
         while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
         {
-            current = openNodes[0];
-            openNodes.RemoveAt(0);
-            closedNodes.Add(current);
+            var first = openNodes.First();
+            current = first;
+            openNodes.Remove(first);
+            closedNodes.Add(first);
 
             foreach (var neighbour in current.neighbours)
             {
@@ -59,13 +60,8 @@ public static class AStar
                             neighbour.previousPathNode = current;
                             neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
                             neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
+
                             openNodes.Add(neighbour);
-                            openNodes.Sort((n1, n2) =>
-                            {
-                                if (n1.F > n2.F) return 1;
-                                if (n1.F < n2.F) return -1;
-                                return 0;
-                            });
                         }
                     }
                 }
@@ -74,7 +70,7 @@ public static class AStar
 
         if (!closedNodes.Contains(endNode))
         {
-            return null;
+            return path;
         }
 
         Node temp = current;
@@ -95,6 +91,5 @@ public static class AStar
         }
 
         return path;
-
     }
 }

@@ -88,16 +88,9 @@ public class Grid : INodeGraph
             pos.x += step.x;
         }
 
-        for (int x = 0; x < xSize; x++)
+        foreach (var node in nodes)
         {
-            for (int y = 0; y < ySize; y++)
-            {
-                for (int z = 0; z < zSize; z++)
-                {
-                    ref var node = ref nodes[x, y, z];
-                    node.neighbours = StoreNeighbours(node, settings.allowDiagonalNeighbours);
-                }
-            }
+            StoreNeighbours(node, settings.allowDiagonalNeighbours);
         }
     }
 
@@ -109,58 +102,59 @@ public class Grid : INodeGraph
         }
     }
 
-    private void AddNeighbour(Node node, HashSet<Node> neighbours, int dirX, int dirY, int dirZ)
+    /// <summary>
+    /// Adds grid neighbour to node, direction ints should be in [-1, 1]
+    /// </summary>
+    /// <param name="node"></param>
+    /// <param name="dirX"></param>
+    /// <param name="dirY"></param>
+    /// <param name="dirZ"></param>
+    private void AddNeighbour(Node node, int dirX, int dirY, int dirZ)
     {
-        dirX = Mathf.Clamp(dirX, -1, 1);
-        dirY = Mathf.Clamp(dirY, -1, 1);
-        dirZ = Mathf.Clamp(dirZ, -1, 1);
-
-        int x = node.iX + dirX;
+        int x = node.x + dirX;
         if (x < 0 || x > xSize - 1) return;
 
-        int y = node.iY + dirY;
+        int y = node.y + dirY;
         if (y < 0 || y > ySize - 1) return;
 
-        int z = node.iZ + dirZ;
+        int z = node.z + dirZ;
         if (z < 0 || z > zSize - 1) return;
 
-        neighbours.Add(nodes[x, y, z]);
+        node.neighbours.Add(nodes[x, y, z]);
     }
 
-    public HashSet<Node> StoreNeighbours(Node node, bool includeDiagonal = true)
+    public void StoreNeighbours(Node node, bool includeDiagonal = true)
     {
-        if (node.iX < 0 || node.iY < 0 || node.iZ < 0) return null;
-        HashSet<Node> neighbours = new HashSet<Node>();
-        AddNeighbour(node, neighbours, -1, 0, 0);
-        AddNeighbour(node, neighbours, 1, 0, 0);
-        AddNeighbour(node, neighbours, 0, -1, 0);
-        AddNeighbour(node, neighbours, 0, 1, 0);
-        AddNeighbour(node, neighbours, 0, 0, -1);
-        AddNeighbour(node, neighbours, 0, 0, 1);
+        if (node.x < 0 || node.y < 0 || node.z < 0) return;
+        AddNeighbour(node, -1, 0, 0);
+        AddNeighbour(node, 1, 0, 0);
+        AddNeighbour(node, 0, -1, 0);
+        AddNeighbour(node, 0, 1, 0);
+        AddNeighbour(node, 0, 0, -1);
+        AddNeighbour(node, 0, 0, 1);
         if (includeDiagonal)
         {
-            AddNeighbour(node, neighbours, -1, 1, -1);
-            AddNeighbour(node, neighbours, -1, 1, 0);
-            AddNeighbour(node, neighbours, -1, 1, 1);
-            AddNeighbour(node, neighbours, 0, 1, 1);
-            AddNeighbour(node, neighbours, 1, 1, 1);
-            AddNeighbour(node, neighbours, 1, 1, 0);
-            AddNeighbour(node, neighbours, 1, 1, -1);
-            AddNeighbour(node, neighbours, 0, 1, -1);
-            AddNeighbour(node, neighbours, 1, 0, -1);
-            AddNeighbour(node, neighbours, 1, 0, 1);
-            AddNeighbour(node, neighbours, -1, 0, 1);
-            AddNeighbour(node, neighbours, -1, 0, -1);
-            AddNeighbour(node, neighbours, -1, -1, -1);
-            AddNeighbour(node, neighbours, -1, -1, 0);
-            AddNeighbour(node, neighbours, -1, -1, 1);
-            AddNeighbour(node, neighbours, 0, -1, 1);
-            AddNeighbour(node, neighbours, 1, -1, 1);
-            AddNeighbour(node, neighbours, 1, -1, 0);
-            AddNeighbour(node, neighbours, 1, -1, -1);
-            AddNeighbour(node, neighbours, 0, -1, -1);
+            AddNeighbour(node, -1, 1, -1);
+            AddNeighbour(node, -1, 1, 0);
+            AddNeighbour(node, -1, 1, 1);
+            AddNeighbour(node, 0, 1, 1);
+            AddNeighbour(node, 1, 1, 1);
+            AddNeighbour(node, 1, 1, 0);
+            AddNeighbour(node, 1, 1, -1);
+            AddNeighbour(node, 0, 1, -1);
+            AddNeighbour(node, 1, 0, -1);
+            AddNeighbour(node, 1, 0, 1);
+            AddNeighbour(node, -1, 0, 1);
+            AddNeighbour(node, -1, 0, -1);
+            AddNeighbour(node, -1, -1, -1);
+            AddNeighbour(node, -1, -1, 0);
+            AddNeighbour(node, -1, -1, 1);
+            AddNeighbour(node, 0, -1, 1);
+            AddNeighbour(node, 1, -1, 1);
+            AddNeighbour(node, 1, -1, 0);
+            AddNeighbour(node, 1, -1, -1);
+            AddNeighbour(node, 0, -1, -1);
         }
-        return neighbours;
     }
 
     //TODO error if node isnt walkable, should also find adjacent node closest to target instead, probably insert a temporary node here
@@ -186,7 +180,7 @@ public class Grid : INodeGraph
     {
         foreach (var node in nodes)
         {
-            if (node.F !=  -1)
+            if (node.F != -1)
             {
                 node.cost = -1;
                 node.heuristic = -1;
@@ -194,13 +188,52 @@ public class Grid : INodeGraph
         }
     }
 
-    public List<Node> openNodes;
+    public SortedSet<Node> openNodes;
     public HashSet<Node> closedNodes;
     public int neighbourChecks;
 
     public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)
     {
         return AStar.FindPath(this, start, end, settings, isoLevel, out neighbourChecks, out openNodes, out closedNodes);
+    }
+
+    /// <summary>
+    /// Only updates nodes where necessary, doesnt rebuild whole grid
+    /// </summary>
+    /// <param name="settings"></param>
+    /// <param name="GetIsoValue"></param>
+    public void Update(GridGenerationSettings settings, Func<Vector3, float> GetIsoValue)
+    {
+        Vector3 pos = center - extents / 2;
+        for (int x = 0; x < xSize; x++)
+        {
+            for (int y = 0; y < ySize; y++)
+            {
+                for (int z = 0; z < zSize; z++)
+                {
+                    if (nodes[x, y, z] == null)
+                    {
+                        nodes[x, y, z] = new Node(pos, GetIsoValue(pos), x, y, z);
+                    }
+                    else
+                    {
+                        nodes[x, y, z].pos = pos;
+                        nodes[x, y, z].isoValue = GetIsoValue(pos);
+                    }
+                    pos.z += step.z;
+                }
+                pos.z = center.z - extents.z / 2;
+                pos.y += step.y;
+            }
+            pos.y = center.y - extents.y / 2;
+            pos.x += step.x;
+        }
+
+        foreach (var node in nodes)
+        {
+            if (node.neighbours.Count == 26) continue;
+            StoreNeighbours(node, settings.allowDiagonalNeighbours);
+        }
     }
 
 }

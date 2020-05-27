@@ -277,20 +277,22 @@ public static class MarchingTables
     // |/         |/
     // c0---e0---c1
 
+
+    //using Vector3Int would require more expensive Vector3 casts for Marching Cube interpolation
     /// <summary>
     /// Local position of cube corners
     /// </summary>
-    public static Vector3Int[] CubeCorners = new Vector3Int[8]
+    public static Vector3[] CubeCorners = new Vector3[8]
     {
-        new Vector3Int(0, 0, 0),
-        new Vector3Int(1, 0, 0),
-        new Vector3Int(1, 0, 1),
-        new Vector3Int(0, 0, 1),
+        new Vector3(0, 0, 0),
+        new Vector3(1, 0, 0),
+        new Vector3(1, 0, 1),
+        new Vector3(0, 0, 1),
 
-        new Vector3Int(0, 1, 0),
-        new Vector3Int(1, 1, 0),
-        new Vector3Int(1, 1, 1),
-        new Vector3Int(0, 1, 1)
+        new Vector3(0, 1, 0),
+        new Vector3(1, 1, 0),
+        new Vector3(1, 1, 1),
+        new Vector3(0, 1, 1)
     };
     
 

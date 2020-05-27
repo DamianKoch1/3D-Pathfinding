@@ -20,9 +20,9 @@ public static class MarchingCubes
                     int cellType = GetCellType(grid, x, y, z, isoLevel);
                     for (int i = 0; Triangulation[cellType, i] != -1; i += 3)
                     {
-                        var edge0 = Triangulation[cellType, i];
-                        var edge1 = Triangulation[cellType, i + 1];
-                        var edge2 = Triangulation[cellType, i + 2];
+                        int edge0 = Triangulation[cellType, i];
+                        int edge1 = Triangulation[cellType, i + 1];
+                        int edge2 = Triangulation[cellType, i + 2];
 
                         Vector3 a = Interp(edge0, GetEdgeCornerIsoValue(grid, x, y, z, edge0, 0), GetEdgeCornerIsoValue(grid, x, y, z, edge0, 1), isoLevel);
                         Vector3 b = Interp(edge1, GetEdgeCornerIsoValue(grid, x, y, z, edge1, 0), GetEdgeCornerIsoValue(grid, x, y, z, edge1, 1), isoLevel);
@@ -71,10 +71,10 @@ public static class MarchingCubes
     /// <returns></returns>
     public static float GetEdgeCornerIsoValue(Grid grid, int x, int y, int z, int edgeIndex, int cornerEdge)
     {
-        Vector3Int corner = CubeCorners[EdgeCornerIdx[edgeIndex, cornerEdge]];
-        x += corner.x;
-        y += corner.y;
-        z += corner.z;
+        Vector3 corner = CubeCorners[EdgeCornerIdx[edgeIndex, cornerEdge]];
+        x += (int)corner.x;
+        y += (int)corner.y;
+        z += (int)corner.z;
         return grid[x, y, z];
     }
 

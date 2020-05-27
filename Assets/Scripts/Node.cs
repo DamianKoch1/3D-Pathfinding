@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Node
+public class Node : IComparable<Node>
 {
     public Vector3 pos;
 
@@ -13,17 +13,28 @@ public class Node
 
     public float cost = -1;
 
-    public Vector3Int idx => new Vector3Int(iX, iY, iZ);
+    public Vector3Int idx => new Vector3Int(x, y, z);
 
-    public int iX;
-    public int iY;
-    public int iZ;
+    public int x;
+    public int y;
+    public int z;
 
     public float isoValue;
 
-    public HashSet<Node> neighbours;
+    //grid doesn't have duplicates, maybe changing mesh graph from vertices to triangle centers so no HashSet needed here
+    public List<Node> neighbours;
 
     public float costHeuristicBalance = 0.5f;
+
+    /// <summary>
+    /// temp function used while mesh vertex graph uses vertices as nodes
+    /// </summary>
+    /// <param name="node"></param>
+    public void AddUniqueNeighbour(Node node)
+    {
+        if (neighbours.Contains(node)) return;
+        neighbours.Add(node);
+    }
 
     public float F
     {
@@ -37,14 +48,14 @@ public class Node
         }
     }
 
-    public Node(Vector3 _pos, float _walkable, int _iX = -1, int _iY = -1, int _iZ = -1)
+    public Node(Vector3 _pos, float _isoValue, int iX = -1, int iY = -1, int iZ = -1)
     {
-        neighbours = new HashSet<Node>();
+        neighbours = new List<Node>(26);
         pos = _pos;
-        iX = _iX;
-        iY = _iY;
-        iZ = _iZ;
-        isoValue = _walkable;
+        x = iX;
+        y = iY;
+        z = iZ;
+        isoValue = _isoValue;
     }
 
     public void DrawGizmos(Color color, float isoLevel)
@@ -53,4 +64,10 @@ public class Node
         Gizmos.DrawWireCube(pos, Vector3.one * 0.1f);
     }
 
+    public int CompareTo(Node other)
+    {
+        if (F > other.F) return 1;
+        if (F < other.F) return -1;
+        return 0;
+    }
 }

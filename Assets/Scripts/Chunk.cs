@@ -54,7 +54,16 @@ public class Chunk : MonoBehaviour
                 break;
         }
 
-        grid = new Grid(transform.position, gridSettings, GetIsoValue);
+        if (grid == null)
+        {
+            grid = new Grid(transform.position, gridSettings, GetIsoValue);
+        }
+        else
+        {
+            grid.Update(gridSettings, GetIsoValue);
+        }
+
+
     }
 
     public void Clear()
@@ -73,14 +82,14 @@ public class Chunk : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!gridSettings) return;
-        if (!gridSettings.drawExtents) return;
-        Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
-        if (grid != null)
+        if (grid == null) return;
+        if (gridSettings.drawExtents)
         {
-            if (gridSettings.drawNodes)
-            {
-                grid.DrawGizmos(gridSettings.nodeColor, gridSettings.isoLevel);
-            }
+            Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
+        }
+        if (gridSettings.drawNodes)
+        {
+            grid.DrawGizmos(gridSettings.nodeColor, gridSettings.isoLevel);
         }
     }
 

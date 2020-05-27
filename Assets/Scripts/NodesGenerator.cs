@@ -41,6 +41,14 @@ public class NodesGenerator : MonoBehaviour
     [HideInInspector]
     public bool hasGrid;
 
+    private void Start()
+    {
+        GenerateChunks();
+        GenerateGrid();
+        MarchCubes();
+        FindPath();
+    }
+
     public void GenerateChunks()
     {
         chunks = new Chunk[chunkCount.x, chunkCount.y, chunkCount.z];
