@@ -64,10 +64,12 @@ public class Node : IComparable<Node>
         Gizmos.DrawWireCube(pos, Vector3.one * 0.1f);
     }
 
+
     public int CompareTo(Node other)
     {
         if (F > other.F) return 1;
         if (F < other.F) return -1;
-        return 0;
+        //experiment with tie breakers, 1 for older or -1 first, also try comparing cost / heuristic
+        return 1;
     }
 }
