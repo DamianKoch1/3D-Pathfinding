@@ -10,11 +10,6 @@ public class PathfindingTestEditor : Editor
     {
         DrawDefaultInspector();
 
-        if (GUILayout.Button("Build Graph"))
-        {
-            ((PathfindingTest)target).BuildGraph();
-        }
-
         if (GUILayout.Button("Find Path"))
         {
             ((PathfindingTest)target).FindPath();

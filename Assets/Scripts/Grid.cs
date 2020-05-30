@@ -188,14 +188,6 @@ public class Grid : INodeGraph
         }
     }
 
-    public SortedSet<Node> openNodes;
-    public HashSet<Node> closedNodes;
-    public int neighbourChecks;
-
-    public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel)
-    {
-        return AStar.FindPath(this, start, end, settings, isoLevel, out neighbourChecks, out openNodes, out closedNodes);
-    }
 
     /// <summary>
     /// Only updates nodes where necessary, doesnt rebuild whole grid

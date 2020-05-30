@@ -13,10 +13,6 @@ public class PathfindingSettings : ScriptableObject
 
     public bool benchmark;
 
-    public Color highF;
-
-    public Color lowF;
-
 
     [Range(0, 1), Tooltip("Higher value means greedier depth-first search, lower means breadth-first")]
     public float greediness = 0.5f;

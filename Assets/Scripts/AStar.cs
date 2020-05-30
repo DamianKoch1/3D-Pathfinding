@@ -5,9 +5,9 @@ using UnityEngine;
 
 public static class AStar
 {
-    public static Stack<Vector3> FindPath(INodeGraph graph, Vector3 start, Vector3 end, PathfindingSettings settings, float isoLevel, out int neighbourChecks, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes)
+    public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes, int nodeCount = 1000)
     {
-        neighbourChecks = 0;
+        int neighbourChecks = 0;
 
         //euclidean distance from start to end
         float distance = 0;
@@ -19,29 +19,29 @@ public static class AStar
 
         if (settings.benchmark)
         {
-            distance = Vector3.Distance(start, end);
+            distance = Vector3.Distance(start.pos, goal.pos);
             sw.Start();
         }
 
-        var startNode = graph.GetClosestNode(start);
-        var endNode = graph.GetClosestNode(end);
-
-        var startCapacity = graph.Nodes.Count() / 10;
+        var startCapacity = nodeCount / 10;
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
         //much faster .Contains than list
         openNodes = new SortedSet<Node>();
+
         closedNodes = new HashSet<Node>();
 
 
-        Node current = startNode;
+        Node current = start;
         current.costHeuristicBalance = settings.greediness;
         current.cost = 0;
-        current.heuristic = settings.Heuristic(current.pos, endNode.pos);
-        openNodes.Add(startNode);
-
-        while (openNodes.Count != 0 && !closedNodes.Contains(endNode))
+        current.heuristic = settings.Heuristic(current.pos, goal.pos);
+        openNodes.Add(start);
+        int test = 10000;
+        while (openNodes.Count != 0 && !closedNodes.Contains(goal))
         {
+            test--;
+            if (test == 0) break;
             var first = openNodes.First();
             current = first;
             openNodes.Remove(first);
@@ -58,8 +58,8 @@ public static class AStar
                         {
                             neighbour.costHeuristicBalance = settings.greediness;
                             neighbour.previousPathNode = current;
-                            neighbour.heuristic = settings.Heuristic(neighbour.pos, endNode.pos);
-                            neighbour.cost = neighbour.previousPathNode.cost + settings.CostIncrease(neighbour);
+                            neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
+                            neighbour.cost = current.cost + settings.CostIncrease(neighbour);
 
                             openNodes.Add(neighbour);
                         }
@@ -68,21 +68,21 @@ public static class AStar
             }
         }
 
-        if (!closedNodes.Contains(endNode))
+        if (!closedNodes.Contains(goal))
         {
             return path;
         }
 
         Node temp = current;
-        path.Push(end);
+        path.Push(goal.pos);
         while (temp != null)
         {
             pathLength += Vector3.Distance(path.Peek(), temp.pos);
             path.Push(temp.pos);
             temp = temp.previousPathNode;
-            if (temp == startNode) break;
+            if (temp.pos == start.pos) break;
         }
-        pathLength += Vector3.Distance(path.Peek(), start);
+        pathLength += Vector3.Distance(path.Peek(), start.pos);
 
         if (settings.benchmark)
         {

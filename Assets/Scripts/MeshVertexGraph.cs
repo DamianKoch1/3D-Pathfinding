@@ -9,6 +9,7 @@ public class MeshVertexGraph : INodeGraph
 
     public IEnumerable<Node> Nodes => nodes.Values;
 
+
     public MeshVertexGraph(MeshFilter filter)
     {
         nodes = new Dictionary<Vector3, Node>();
@@ -61,18 +62,22 @@ public class MeshVertexGraph : INodeGraph
             }
         }
     }
-
-    public SortedSet<Node> openNodes;
-    public HashSet<Node> closedNodes;
-    public int neighbourChecks;
-
    
-    public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings settings)
-    {
-        return AStar.FindPath(this, start, end, settings, -1, out neighbourChecks, out openNodes, out closedNodes);
-
-    }
-
-
 }
 
+[System.Serializable]
+public struct NavmeshHit
+{
+    public Vector3 point;
+    public int triangleIndex;
+
+    [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
+    public Vector3 barycentric;
+
+    public NavmeshHit(RaycastHit hit)
+    {
+        point = hit.point;
+        triangleIndex = hit.triangleIndex;
+        barycentric = hit.barycentricCoordinate;
+    }
+}

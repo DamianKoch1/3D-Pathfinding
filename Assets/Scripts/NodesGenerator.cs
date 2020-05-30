@@ -15,7 +15,7 @@ public class NodesGenerator : MonoBehaviour
 
     public Transform start;
 
-    public Transform end;
+    public Transform goal;
 
     [SerializeField]
     private Transform obstacles;
@@ -38,16 +38,36 @@ public class NodesGenerator : MonoBehaviour
     [HideInInspector]
     public bool hasOutOfRangeChunks;
 
+
     [HideInInspector]
     public bool hasGrid;
+
+    [HideInInspector]
+    public bool hasGraph;
+
+    private SortedSet<Node> openNodes;
+    private HashSet<Node> closedNodes;
+
 
     private void Start()
     {
         GenerateChunks();
         GenerateGrid();
+        GenerateGraph();
         MarchCubes();
-        FindPath();
+        FindGridPath();
     }
+
+    private void OnValidate()
+    {
+        if (!autoGenerate) return;
+        gridSettings.onValidate = OnValidate;
+        GenerateChunks();
+        GenerateGrid();
+        GenerateGraph();
+        MarchCubes();
+    }
+
 
     public void GenerateChunks()
     {
@@ -82,6 +102,7 @@ public class NodesGenerator : MonoBehaviour
             }
         }
     }
+
     public void ClearOutOfRangeChunks()
     {
         hasOutOfRangeChunks = false;
@@ -97,7 +118,6 @@ public class NodesGenerator : MonoBehaviour
             }
         }
     }
-
 
     public void GenerateGrid()
     {
@@ -132,6 +152,16 @@ public class NodesGenerator : MonoBehaviour
         hasGrid = true;
     }
 
+    public void GenerateGraph()
+    {
+        if (chunks == null) return;
+        foreach (var chunk in chunks)
+        {
+            chunk.GenerateGraph();
+        }
+        hasGraph = true;
+    }
+
     public void Clear()
     {
         if (chunks == null) return;
@@ -141,71 +171,145 @@ public class NodesGenerator : MonoBehaviour
         }
         GetComponent<LineRenderer>().positionCount = 0;
         hasGrid = false;
+        hasGraph = false;
         chunks = null;
     }
 
-
-    private void OnValidate()
+    public Node GetClosestGridNode(Vector3 position)
     {
-        if (!autoGenerate) return;
-        gridSettings.onValidate = OnValidate;
-        GenerateChunks();
-        GenerateGrid();
-        MarchCubes();
+        Vector3 localPos = position - transform.position;
+        int x = (int)(localPos.x / gridSettings.chunkSize.x);
+        int y = (int)(localPos.y / gridSettings.chunkSize.y);
+        int z = (int)(localPos.z / gridSettings.chunkSize.z);
+        return chunks[x, y, z].grid.GetClosestNode(position);
     }
 
-    public void FindPath()
+    public Node GetClosestGraphNode(Vector3 position)
     {
-        var grid = chunks[0, 0, 0].grid;
-        if (grid == null)
+        Vector3 localPos = position - transform.position;
+        int x = (int)(localPos.x / gridSettings.chunkSize.x);
+        int y = (int)(localPos.y / gridSettings.chunkSize.y);
+        int z = (int)(localPos.z / gridSettings.chunkSize.z);
+        return chunks[x, y, z].graph.GetClosestNode(position);
+    }
+
+    public List<NavmeshHit> GetNavMeshIntersections(Vector3 start, Vector3 goal)
+    {
+        var hits = new List<NavmeshHit>();
+        var dir = (goal - start).normalized;
+        Physics.queriesHitBackfaces = true;
+        var pos = start;
+
+        //prevent infinite loops
+        int maxRaycasts = 100;
+
+        //RaycastAll only giving first hit since next rays start inside previous face
+        while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), gridSettings.navmeshLayer))
+        {
+            maxRaycasts--;
+            hits.Add(new NavmeshHit(hit));
+            //adding small offset from last point to prevent raycasting on the same face
+            pos = hit.point + dir * 0.0001f;
+            if (Vector3.Distance(pos, start) < 0.5f) break;
+            if (maxRaycasts <= 0) break;
+        }
+
+        foreach (var hit in hits)
+        {
+            Debug.DrawLine(hit.point, hit.point + Vector3.up, Color.white, 10);
+        }
+
+        return hits;
+    }
+
+    public void FindGridPath()
+    {
+        if (chunks == null) return;
+        if (!hasGrid)
         {
             GenerateGrid();
         }
 
         var lr = GetComponent<LineRenderer>();
         var pathPoints = new List<Vector3>();
-        var color = Random.ColorHSV();
 
         pathPoints.Add(start.position);
 
-        pathPoints.AddRange(grid.FindPath(start.position, end.position, pathfindingSettings, gridSettings.isoLevel));
+        var startNode = GetClosestGridNode(start.position);
+        var goalNode = GetClosestGridNode(goal.position);
+
+        pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, gridSettings.isoLevel, out openNodes, out closedNodes));
+
+        pathPoints.Add(goal.position);
 
         lr.positionCount = pathPoints.Count;
         lr.SetPositions(pathPoints.ToArray());
     }
 
-
-    private void OnDrawGizmos()
+    public void FindGraphPath()
     {
-        VisualizePathfinding();
+        if (chunks == null) return;
+        if (!hasGraph)
+        {
+            GenerateGraph();
+        }
+
+        var lr = GetComponent<LineRenderer>();
+        var pathPoints = new List<Vector3>();
+
+        pathPoints.Add(start.position);
+
+        var hits = GetNavMeshIntersections(start.position, goal.position);
+        if (hits.Count > 0)
+        {
+            pathPoints.Add(hits[0].point);
+            if (hits.Count > 1)
+            {
+                for (int i = 0; i < hits.Count - 1; i += 2)
+                {
+                    var startNode = GetClosestGraphNode(hits[i].point);
+                    var goalNode = GetClosestGraphNode(hits[i + 1].point);
+
+                    pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, -1, out openNodes, out closedNodes));
+
+
+                    if (i + 2 < hits.Count)
+                    {
+                        pathPoints.Add(hits[i + 2].point);
+                    }
+                }
+                pathPoints.Add(hits[hits.Count - 1].point);
+            }
+        }
+        pathPoints.Add(goal.position);
+
+        lr.positionCount = pathPoints.Count;
+        lr.SetPositions(pathPoints.ToArray());
     }
 
     private void VisualizePathfinding()
     {
         if (!visualizePathfinding) return;
-        if (chunks == null) return;
-        var grid = chunks[0, 0, 0].grid;
-        if (grid == null) return;
-        if (grid.openNodes == null) return;
-        if (grid.closedNodes == null) return;
-        var lowestF = grid.closedNodes.OrderBy(n => n.F).First().F;
+        if (openNodes == null) return;
+        if (closedNodes == null) return;
+        var lowestF = closedNodes.OrderBy(n => n.F).First().F;
         float highestF = 0;
-        if (grid.openNodes.Count == 0)
+        if (openNodes.Count == 0)
         {
-            highestF = grid.closedNodes.OrderBy(n => n.F).Last().F;
+            highestF = closedNodes.OrderBy(n => n.F).Last().F;
         }
         else
         {
-            highestF = grid.openNodes.Last().F;
+            highestF = openNodes.Last().F;
         }
-        foreach (var node in grid.closedNodes)
+        foreach (var node in closedNodes)
         {
-            Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
             Gizmos.DrawCube(node.pos, Vector3.one * 2);
         }
-        foreach (var node in grid.openNodes)
+        foreach (var node in openNodes)
         {
-            Gizmos.color = Color.Lerp(pathfindingSettings.lowF, pathfindingSettings.highF, (node.F - lowestF) / (highestF - lowestF));
+            Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
             Gizmos.DrawCube(node.pos, Vector3.one);
         }
     }
@@ -275,5 +379,10 @@ public class NodesGenerator : MonoBehaviour
         {
             chunk.MarchCubes();
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        VisualizePathfinding();
     }
 }

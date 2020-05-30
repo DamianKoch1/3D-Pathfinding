@@ -13,8 +13,6 @@ public class Node : IComparable<Node>
 
     public float cost = -1;
 
-    public Vector3Int idx => new Vector3Int(x, y, z);
-
     public int x;
     public int y;
     public int z;
@@ -69,7 +67,11 @@ public class Node : IComparable<Node>
     {
         if (F > other.F) return 1;
         if (F < other.F) return -1;
-        //experiment with tie breakers, 1 for older or -1 first, also try comparing cost / heuristic
-        return 1;
+        
+        //set considers equal F nodes as duplicates and wont insert, .Contains only works if there is a node for which this returns 0
+
+        // -> return compare pos with other pos??
+        // allows duplicate f values but also allows .Contains
+        return pos.Equals(other.pos) ? 0 : 1;
     }
 }

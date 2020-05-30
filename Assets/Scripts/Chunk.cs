@@ -8,12 +8,23 @@ public class Chunk : MonoBehaviour
 {
     public Grid grid;
 
+    public MeshVertexGraph graph;
+
+
     public int x;
 
     public int y;
 
     public int z;
 
+
+    [SerializeField]
+    private bool drawNodes;
+
+    [SerializeField]
+    private bool drawNeighbours;
+
+    private bool visualizePathfinding;
 
     private GridGenerationSettings gridSettings;
 
@@ -66,30 +77,57 @@ public class Chunk : MonoBehaviour
 
     }
 
+    public void GenerateGraph()
+    {
+        graph = new MeshVertexGraph(GetComponent<MeshFilter>());
+    }
+
+
     public void Clear()
     {
         grid = null;
+        graph = null;
         GetComponent<MeshFilter>().sharedMesh = null;
         GetComponent<MeshCollider>().sharedMesh = null;
     }
 
-    public Stack<Vector3> FindPath(Vector3 start, Vector3 end, PathfindingSettings pathfindingSettings)
-    {
-        if (!gridSettings) return new Stack<Vector3>();
-        return grid.FindPath(start, end, pathfindingSettings, gridSettings.isoLevel);
-    }
 
     private void OnDrawGizmos()
     {
         if (!gridSettings) return;
-        if (grid == null) return;
-        if (gridSettings.drawExtents)
+        if (grid != null)
         {
-            Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
+            if (gridSettings.drawExtents)
+            {
+                Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
+            }
+            if (gridSettings.drawNodes)
+            {
+                grid.DrawGizmos(gridSettings.nodeColor, gridSettings.isoLevel);
+            }
         }
-        if (gridSettings.drawNodes)
+
+        if (graph != null)
         {
-            grid.DrawGizmos(gridSettings.nodeColor, gridSettings.isoLevel);
+            if (drawNodes || drawNeighbours)
+            {
+                foreach (var node in graph.nodes.Values)
+                {
+                    if (drawNodes)
+                    {
+                        Gizmos.color = Color.green;
+                        Gizmos.DrawWireCube(node.pos, Vector3.one * 0.1f);
+                    }
+                    if (drawNeighbours)
+                    {
+                        Gizmos.color = Color.gray;
+                        foreach (var neighbour in node.neighbours)
+                        {
+                            Gizmos.DrawLine(node.pos, neighbour.pos);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -141,8 +179,10 @@ public class Chunk : MonoBehaviour
             GenerateGrid();
         }
         var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
-        filter.mesh = mesh;
+        filter.sharedMesh = mesh;
         collider.sharedMesh = mesh;
     }
+
+    
 
 }

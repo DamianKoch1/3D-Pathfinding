@@ -20,7 +20,6 @@ public class PathfindingTest : MonoBehaviour
     [SerializeField]
     private MeshFilter targetMesh;
 
-    private MeshVertexGraph graph;
 
     [SerializeField, Range(0.1f, 5)]
     private float minRecalculateMovement = 1;
@@ -30,72 +29,72 @@ public class PathfindingTest : MonoBehaviour
 
     private Vector3 prevPosition;
 
-    [SerializeField]
-    private bool drawNodes;
 
-    [SerializeField]
-    private bool drawNeighbours;
-
-    [SerializeField]
-    private bool visualizePathfinding;
-
-
-    private void Start()
+    public List<NavmeshHit> GetNavMeshIntersections(Vector3 start, Vector3 goal)
     {
-        BuildGraph();
-        FindPath();
-    }
+        var hits = new List<NavmeshHit>();
+        var dir = (goal - start).normalized;
+        Physics.queriesHitBackfaces = true;
+        var pos = start;
 
-    public void BuildGraph()
-    {
-        graph = new MeshVertexGraph(targetMesh);
+        //prevent infinite loops
+        int maxRaycasts = 100;
+
+        //RaycastAll only giving first hit since next rays start inside previous face
+        while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), mask))
+        {
+            maxRaycasts--;
+            hits.Add(new NavmeshHit(hit));
+            //adding small offset from last point to prevent raycasting on the same face
+            pos = hit.point + dir * 0.0001f;
+            if (Vector3.Distance(pos, start) < 0.5f) break;
+            if (maxRaycasts <= 0) break;
+        }
+
+        return hits;
     }
 
     //TODO fix path walking on mesh between wrong hits if start is inside mesh
     [ContextMenu("Find path")]
     public void FindPath()
     {
-        if (graph == null) return;
-        var lr = GetComponent<LineRenderer>();
-        var pathPoints = new List<Vector3>();
-        pathPoints.Add(start.position);
-        if (hits.Count > 0)
-        {
-            pathPoints.Add(hits[0].point);
-            if (hits.Count > 1)
-            {
-                for (int i = 0; i < hits.Count - 1; i += 2)
-                {
-                    pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
-                    if (i + 2 < hits.Count)
-                    {
-                        pathPoints.Add(hits[i + 2].point);
-                    }
-                }
-                pathPoints.Add(hits[hits.Count - 1].point);
-            }
-        }
-        pathPoints.Add(target.position);
-        lr.positionCount = pathPoints.Count;
-        lr.SetPositions(pathPoints.ToArray());
+        //if (graph == null) return;
+        //var lr = GetComponent<LineRenderer>();
+        //var pathPoints = new List<Vector3>();
+        //pathPoints.Add(start.position);
+        //if (hits.Count > 0)
+        //{
+        //    pathPoints.Add(hits[0].point);
+        //    if (hits.Count > 1)
+        //    {
+        //        for (int i = 0; i < hits.Count - 1; i += 2)
+        //        {
+        //            pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
+        //            if (i + 2 < hits.Count)
+        //            {
+        //                pathPoints.Add(hits[i + 2].point);
+        //            }
+        //        }
+        //        pathPoints.Add(hits[hits.Count - 1].point);
+        //    }
+        //}
+        //pathPoints.Add(target.position);
+        //lr.positionCount = pathPoints.Count;
+        //lr.SetPositions(pathPoints.ToArray());
     }
 
     [ContextMenu("Clear")]
     public void Clear()
     {
-        graph = null;
         GetComponent<LineRenderer>().positionCount = 0;
     }
 
 
     private void OnDrawGizmos()
     {
-        Update();
-
-        VisualizePathfinding();
-
         if (Vector3.Distance(start.position, prevPosition) >= minRecalculateMovement)
         {
+            hits = GetNavMeshIntersections(start.position, target.position);
             prevPosition = start.position;
             FindPath();
         }
@@ -107,97 +106,7 @@ public class PathfindingTest : MonoBehaviour
         {
             Gizmos.DrawSphere(hit.point, 0.5f);
         }
-
-        if (graph != null)
-        {
-            if (drawNodes || drawNeighbours)
-            {
-                foreach (var node in graph.nodes.Values)
-                {
-                    if (drawNodes)
-                    {
-                        Gizmos.color = Color.green;
-                        Gizmos.DrawWireCube(node.pos, Vector3.one * 0.1f);
-                    }
-                    if (drawNeighbours)
-                    {
-                        Gizmos.color = Color.gray;
-                        foreach (var neighbour in node.neighbours)
-                        {
-                            Gizmos.DrawLine(node.pos, neighbour.pos);
-                        }
-                    }
-                }
-            }
-        }
     }
 
-    private void VisualizePathfinding()
-    {
-        if (!visualizePathfinding) return;
-        if (graph == null) return;
-        if (graph.openNodes == null) return;
-        if (graph.closedNodes == null) return;
-        var lowestF = graph.closedNodes.OrderBy(n => n.F).First().F;
-        float highestF = 0;
-        if (graph.openNodes.Count == 0)
-        {
-            highestF = graph.closedNodes.OrderBy(n => n.F).Last().F;
-        }
-        else
-        {
-            highestF = graph.openNodes.Last().F;
-        }
-        foreach (var node in graph.closedNodes)
-        {
-            Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
-            Gizmos.DrawCube(node.pos, Vector3.one * 2);
-        }
-        foreach (var node in graph.openNodes)
-        {
-            Gizmos.color = Color.Lerp(settings.lowF, settings.highF, (node.F - lowestF) / (highestF - lowestF));
-            Gizmos.DrawCube(node.pos, Vector3.one);
-        }
-    }
-
-    void Update()
-    {
-        if (!start) return;
-        if (!target) return;
-        hits = new List<NavmeshHit>();
-        var dir = (target.position - start.position).normalized;
-        Physics.queriesHitBackfaces = true;
-        var pos = start.position;
-
-        //prevent infinite loops
-        int maxRaycasts = 100;
-
-        //RaycastAll only giving first hit since next rays start inside previous face
-        while (Physics.Raycast(pos, target.position - pos, out var hit, Vector3.Distance(pos, target.position), mask))
-        {
-            maxRaycasts--;
-            hits.Add(new NavmeshHit(hit));
-            //adding small offset from last point to prevent raycasting on the same face
-            pos = hit.point + dir * 0.0001f;
-            if (Vector3.Distance(pos, start.position) < 0.5f) break;
-            if (maxRaycasts <= 0) break;
-        }
-    }
 }
 
-[System.Serializable]
-public struct NavmeshHit
-{
-    public Vector3 point;
-    public int triangleIndex;
-
-    [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
-    public Vector3 barycentric;
-
-    public NavmeshHit(RaycastHit hit)
-    {
-        point = hit.point;
-        triangleIndex = hit.triangleIndex;
-        barycentric = hit.barycentricCoordinate;
-    }
-}

@@ -44,6 +44,11 @@ public class OctreeGeneratorEditor : Editor
             generator.GenerateGrid();
         }
 
+        if (GUILayout.Button("Rebuild Graph"))
+        {
+            generator.GenerateGraph();
+        }
+
         if (!generator.hasGrid)
         {
             GUI.enabled = false;
@@ -59,14 +64,24 @@ public class OctreeGeneratorEditor : Editor
             generator.MarchCubes();
         }
 
-        if (!generator.start || !generator.end)
+        if (!generator.start || !generator.goal)
         {
             GUI.enabled = false;
         }
-        if (GUILayout.Button("Find Path"))
+        if (GUILayout.Button("Find Grid Path"))
         {
-            generator.FindPath();
+            generator.FindGridPath();
         }
+
+        if (!generator.hasGraph)
+        {
+            GUI.enabled = false;
+        }
+        if (GUILayout.Button("Find Graph Path"))
+        {
+            generator.FindGraphPath();
+        }
+
         GUI.enabled = true;
 
         if (GUILayout.Button("Clear"))
