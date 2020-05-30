@@ -53,9 +53,10 @@ public class NodesGenerator : MonoBehaviour
     {
         GenerateChunks();
         GenerateGrid();
-        GenerateGraph();
         MarchCubes();
+        GenerateGraph();
         FindGridPath();
+        FindGraphPath();
     }
 
     private void OnValidate()

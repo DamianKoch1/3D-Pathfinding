@@ -74,4 +74,9 @@ public class Node : IComparable<Node>
         // allows duplicate f values but also allows .Contains
         return pos.Equals(other.pos) ? 0 : 1;
     }
+
+    public override int GetHashCode()
+    {
+        return pos.GetHashCode();
+    }
 }
