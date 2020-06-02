@@ -19,19 +19,9 @@ public class Node : IComparable<Node>
 
     public float isoValue;
 
-    public List<Node> neighbours;
+    public HashSet<Node> neighbours;
 
     public float costHeuristicBalance = 0.5f;
-
-    /// <summary>
-    /// temp function used while mesh vertex graph uses vertices as nodes
-    /// </summary>
-    /// <param name="node"></param>
-    public void AddUniqueNeighbour(Node node)
-    {
-        if (neighbours.Contains(node)) return;
-        neighbours.Add(node);
-    }
 
     public float F
     {
@@ -47,7 +37,7 @@ public class Node : IComparable<Node>
 
     public Node(Vector3 _pos, float _isoValue, int iX = -1, int iY = -1, int iZ = -1)
     {
-        neighbours = new List<Node>(26);
+        neighbours = new HashSet<Node>();
         pos = _pos;
         x = iX;
         y = iY;

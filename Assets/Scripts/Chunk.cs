@@ -11,6 +11,7 @@ public class Chunk : MonoBehaviour
     public MeshVertexGraph graph;
 
 
+
     public int x;
 
     public int y;
@@ -28,6 +29,8 @@ public class Chunk : MonoBehaviour
 
     private GridGenerationSettings gridSettings;
 
+    private Bounds bounds;
+
     public void Initialize(GridGenerationSettings settings, int _x, int _y, int _z)
     {
         gridSettings = settings;
@@ -38,6 +41,7 @@ public class Chunk : MonoBehaviour
         var maxY = (int)(gridSettings.chunkSize.y / gridSettings.step.y);
         var maxZ = (int)(gridSettings.chunkSize.z / gridSettings.step.z);
         transform.localPosition = new Vector3(x * maxX * gridSettings.step.x, y * maxY * gridSettings.step.y, z * maxZ * gridSettings.step.z) + gridSettings.chunkSize / 2;
+        bounds = new Bounds(transform.position, gridSettings.chunkSize);
         gameObject.name = "Chunk " + new Vector3Int(x, y, z);
     }
 
@@ -73,13 +77,11 @@ public class Chunk : MonoBehaviour
         {
             grid.Update(gridSettings, GetIsoValue);
         }
-
-
     }
 
     public void GenerateGraph()
     {
-        graph = new MeshVertexGraph(GetComponent<MeshFilter>());
+        graph = new MeshVertexGraph(GetComponent<MeshFilter>(), bounds);
     }
 
 
@@ -120,7 +122,7 @@ public class Chunk : MonoBehaviour
                     }
                     if (drawNeighbours)
                     {
-                        Gizmos.color = Color.gray;
+                        Gizmos.color = Color.magenta;
                         foreach (var neighbour in node.neighbours)
                         {
                             Gizmos.DrawLine(node.pos, neighbour.pos);

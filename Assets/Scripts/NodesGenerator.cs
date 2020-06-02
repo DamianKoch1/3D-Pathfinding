@@ -134,26 +134,23 @@ public class NodesGenerator : MonoBehaviour
                     if (x > 0)
                     {
                         chunks[x - 1, y, z].grid.xNeighbour = chunks[x, y, z].grid;
-                        chunks[x, y, z].grid.negXNeighbour = chunks[x - 1, y, z].grid;
                     }
 
                     if (y > 0)
                     {
                         chunks[x, y - 1, z].grid.yNeighbour = chunks[x, y, z].grid;
-                        chunks[x, y, z].grid.negYNeighbour = chunks[x, y - 1, z].grid;
                     }
 
                     if (z > 0)
                     {
                         chunks[x, y, z - 1].grid.zNeighbour = chunks[x, y, z].grid;
-                        chunks[x, y, z].grid.negZNeighbour = chunks[x, y, z - 1].grid;
                     }
                 }
             }
         }
         foreach (var chunk in chunks)
         {
-            chunk.grid.StoreCrossChunkNeighbours(gridSettings.allowDiagonalNeighbours);
+            chunk.grid.StoreCrossChunkNeighbours();
         }
         hasGrid = true;
     }
@@ -161,9 +158,33 @@ public class NodesGenerator : MonoBehaviour
     public void GenerateGraph()
     {
         if (chunks == null) return;
+        for (int x = 0; x < chunkCount.x; x++)
+        {
+            for (int y = 0; y < chunkCount.y; y++)
+            {
+                for (int z = 0; z < chunkCount.z; z++)
+                {
+                    chunks[x, y, z].GenerateGraph();
+                    if (x > 0)
+                    {
+                        chunks[x - 1, y, z].graph.xNeighbour = chunks[x, y, z].graph;
+                    }
+
+                    if (y > 0)
+                    {
+                        chunks[x, y - 1, z].graph.yNeighbour = chunks[x, y, z].graph;
+                    }
+
+                    if (z > 0)
+                    {
+                        chunks[x, y, z - 1].graph.zNeighbour = chunks[x, y, z].graph;
+                    }
+                }
+            }
+        }
         foreach (var chunk in chunks)
         {
-            chunk.GenerateGraph();
+            chunk.graph.StoreCrossChunkNeighbours();
         }
         hasGraph = true;
     }
@@ -267,6 +288,9 @@ public class NodesGenerator : MonoBehaviour
 
         pathPoints.Add(start.position);
 
+        openNodes = new SortedSet<Node>();
+        closedNodes = new HashSet<Node>();
+
         var hits = GetNavMeshIntersections(start.position, goal.position);
         if (hits.Count > 0)
         {
@@ -279,7 +303,6 @@ public class NodesGenerator : MonoBehaviour
                     var goalNode = GetClosestGraphNode(hits[i + 1].point);
 
                     pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, -1, out openNodes, out closedNodes));
-
 
                     if (i + 2 < hits.Count)
                     {
@@ -357,9 +380,9 @@ public class NodesGenerator : MonoBehaviour
         {
             child.position = obstacles.position + new Vector3
                 (
-                    Random.Range(-gridSettings.chunkSize.x / 2, gridSettings.chunkSize.x / 2),
-                    Random.Range(-gridSettings.chunkSize.y / 2, gridSettings.chunkSize.y / 2),
-                    Random.Range(-gridSettings.chunkSize.z / 2, gridSettings.chunkSize.z / 2)
+                    Random.Range(0, gridSettings.chunkSize.x),
+                    Random.Range(0, gridSettings.chunkSize.y),
+                    Random.Range(0, gridSettings.chunkSize.z)
                 );
             child.rotation = Random.rotation;
             child.localScale = new Vector3

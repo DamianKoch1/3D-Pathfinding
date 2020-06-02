@@ -16,7 +16,7 @@ MonoBehaviour:
   drawExtents: 1
   nodeColor: {r: 0, g: 1, b: 0, a: 1}
   chunkSize: {x: 100, y: 100, z: 100}
-  isoLevel: 0.483
+  isoLevel: 0.685
   allowDiagonalNeighbours: 1
   step: {x: 5, y: 5, z: 5}
   mode: 0
@@ -24,6 +24,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   navMeshOffset: 10
-  scale: 0.0101
+  scale: 0.0127
   seed: 0
   useRandomSeed: 0

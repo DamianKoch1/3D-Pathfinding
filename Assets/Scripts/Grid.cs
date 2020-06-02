@@ -56,10 +56,6 @@ public class Grid : INodeGraph
     public Grid yNeighbour;
     public Grid zNeighbour;
 
-    public Grid negXNeighbour;
-    public Grid negYNeighbour;
-    public Grid negZNeighbour;
-
     public Grid(Vector3 _center, GridGenerationSettings settings, Func<Vector3, float> GetIsoValue)
     {
         settings.step.x = Mathf.Max(settings.step.x, 0.5f);
@@ -161,77 +157,45 @@ public class Grid : INodeGraph
         }
     }
 
-    public void StoreCrossChunkNeighbours(bool allowDiagonal = true)
-    {
-        StoreStraightNeighbours();
-        if (allowDiagonal)
-        {
-            StoreStraightNeighbours();
-        }
-    }
 
     /// <summary>
-    /// Only call this after each grid has figured out its and its nodes neighbours
+    /// Only call this after each grid has figured out its and its nodes neighbours, ignoring diagonal chunk neighbours for now, shouldn't make a noticeable difference
     /// </summary>
-    private void StoreStraightNeighbours()
+    public void StoreCrossChunkNeighbours()
     {
-        //if (xNeighbour != null)
+        if (xNeighbour != null)
         {
             for (int y = 0; y < ySize; y++)
             {
                 for (int z = 0; z < zSize; z++)
                 {
-                    MergeNeighbours(nodes[xSize - 1, y, z], xNeighbour?.nodes[0, y, z]);
+                    MergeNeighbours(nodes[xSize - 1, y, z], xNeighbour.nodes[0, y, z]);
                 }
             }
         }
 
-        //if (yNeighbour != null)
+        if (yNeighbour != null)
         {
             for (int x = 0; x < xSize; x++)
             {
                 for (int z = 0; z < zSize; z++)
                 {
-                    MergeNeighbours(nodes[x, ySize - 1, z], yNeighbour?.nodes[x, 0, z]);
+                    MergeNeighbours(nodes[x, ySize - 1, z], yNeighbour.nodes[x, 0, z]);
                 }
             }
         }
 
-        //if (zNeighbour != null)
+        if (zNeighbour != null)
         {
             for (int x = 0; x < xSize; x++)
             {
                 for (int y = 0; y < ySize; y++)
                 {
-                    MergeNeighbours(nodes[x, y, zSize - 1], zNeighbour?.nodes[x, y, 0]);
+                    MergeNeighbours(nodes[x, y, zSize - 1], zNeighbour.nodes[x, y, 0]);
                 }
             }
         }
 
-    }
-
-    private void StoreDiagonalNeighbours()
-    {
-        if (xNeighbour != null)
-        {
-            if (xNeighbour.yNeighbour != null)
-            {
-                for (int z = 0; z < zSize; z++)
-                {
-                }
-            }
-            if (xNeighbour.zNeighbour != null)
-            {
-
-            }
-        }
-        if (yNeighbour != null)
-        {
-            if (yNeighbour.zNeighbour != null)
-            {
-
-            }
-        }
     }
 
     /// <summary>
@@ -241,10 +205,14 @@ public class Grid : INodeGraph
     /// <param name="node2"></param>
     private void MergeNeighbours(Node node1, Node node2)
     {
-        if (node1 == null || node2 == null) return;
-        var neighboursUnion = new List<Node>(node1.neighbours.Union(node2.neighbours));
-        node1.neighbours = neighboursUnion;
-        node2.neighbours = neighboursUnion;
+        foreach (var neighbour in node1.neighbours)
+        {
+            node2.neighbours.Add(neighbour);
+        }
+        foreach (var neighbour in node2.neighbours)
+        {
+            node1.neighbours.Add(neighbour);
+        }
     }
 
     //TODO error if node isnt walkable, should also find adjacent node closest to target instead, probably insert a temporary node here

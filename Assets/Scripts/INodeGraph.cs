@@ -12,4 +12,6 @@ public interface INodeGraph
     Node GetClosestNode(Vector3 position);
 
     void ResetNodes();
+
+    void StoreCrossChunkNeighbours();
 }
