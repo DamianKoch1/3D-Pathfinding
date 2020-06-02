@@ -10,11 +10,7 @@ public class PathfindingTestEditor : Editor
     {
         DrawDefaultInspector();
 
-        if (GUILayout.Button("Find Path"))
-        {
-            ((PathfindingTest)target).FindPath();
-        }
-
+        
         if (GUILayout.Button("Clear"))
         {
             ((PathfindingTest)target).Clear();

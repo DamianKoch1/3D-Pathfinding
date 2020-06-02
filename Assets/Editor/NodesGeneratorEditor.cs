@@ -82,6 +82,7 @@ public class OctreeGeneratorEditor : Editor
             generator.FindGraphPath();
         }
 
+
         GUI.enabled = true;
 
         if (GUILayout.Button("Clear"))

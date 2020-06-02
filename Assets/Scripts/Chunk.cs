@@ -37,7 +37,7 @@ public class Chunk : MonoBehaviour
         var maxX = (int)(gridSettings.chunkSize.x / gridSettings.step.x);
         var maxY = (int)(gridSettings.chunkSize.y / gridSettings.step.y);
         var maxZ = (int)(gridSettings.chunkSize.z / gridSettings.step.z);
-        transform.localPosition = new Vector3(x * maxX * gridSettings.step.x, y * maxY * gridSettings.step.y, z * maxZ * gridSettings.step.z);
+        transform.localPosition = new Vector3(x * maxX * gridSettings.step.x, y * maxY * gridSettings.step.y, z * maxZ * gridSettings.step.z) + gridSettings.chunkSize / 2;
         gameObject.name = "Chunk " + new Vector3Int(x, y, z);
     }
 
@@ -182,7 +182,4 @@ public class Chunk : MonoBehaviour
         filter.sharedMesh = mesh;
         collider.sharedMesh = mesh;
     }
-
-    
-
 }

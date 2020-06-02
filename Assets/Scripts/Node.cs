@@ -19,7 +19,6 @@ public class Node : IComparable<Node>
 
     public float isoValue;
 
-    //grid doesn't have duplicates, maybe changing mesh graph from vertices to triangle centers so no HashSet needed here
     public List<Node> neighbours;
 
     public float costHeuristicBalance = 0.5f;
@@ -65,14 +64,10 @@ public class Node : IComparable<Node>
 
     public int CompareTo(Node other)
     {
+        if ((other.pos - pos).sqrMagnitude < 0.1f) return 0;
         if (F > other.F) return 1;
         if (F < other.F) return -1;
-        
-        //set considers equal F nodes as duplicates and wont insert, .Contains only works if there is a node for which this returns 0
-
-        // -> return compare pos with other pos??
-        // allows duplicate f values but also allows .Contains
-        return pos.Equals(other.pos) ? 0 : 1;
+        return 0;
     }
 
     public override int GetHashCode()

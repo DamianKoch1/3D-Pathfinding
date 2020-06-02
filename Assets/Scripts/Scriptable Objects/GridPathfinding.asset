@@ -15,6 +15,4 @@ MonoBehaviour:
   heuristic: 3
   costIncrease: 1
   benchmark: 1
-  highF: {r: 1, g: 0, b: 0, a: 1}
-  lowF: {r: 0, g: 1, b: 0, a: 1}
-  greediness: 0.673
+  greediness: 0.534

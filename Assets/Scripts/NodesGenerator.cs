@@ -104,6 +104,7 @@ public class NodesGenerator : MonoBehaviour
         }
     }
 
+
     public void ClearOutOfRangeChunks()
     {
         hasOutOfRangeChunks = false;
@@ -123,32 +124,36 @@ public class NodesGenerator : MonoBehaviour
     public void GenerateGrid()
     {
         if (chunks == null) return;
-        foreach (var chunk in chunks)
-        {
-            chunk.GenerateGrid();
-        }
         for (int x = 0; x < chunkCount.x; x++)
         {
             for (int y = 0; y < chunkCount.y; y++)
             {
                 for (int z = 0; z < chunkCount.z; z++)
                 {
+                    chunks[x, y, z].GenerateGrid();
                     if (x > 0)
                     {
                         chunks[x - 1, y, z].grid.xNeighbour = chunks[x, y, z].grid;
+                        chunks[x, y, z].grid.negXNeighbour = chunks[x - 1, y, z].grid;
                     }
 
                     if (y > 0)
                     {
                         chunks[x, y - 1, z].grid.yNeighbour = chunks[x, y, z].grid;
+                        chunks[x, y, z].grid.negYNeighbour = chunks[x, y - 1, z].grid;
                     }
 
                     if (z > 0)
                     {
                         chunks[x, y, z - 1].grid.zNeighbour = chunks[x, y, z].grid;
+                        chunks[x, y, z].grid.negZNeighbour = chunks[x, y, z - 1].grid;
                     }
                 }
             }
+        }
+        foreach (var chunk in chunks)
+        {
+            chunk.grid.StoreCrossChunkNeighbours(gridSettings.allowDiagonalNeighbours);
         }
         hasGrid = true;
     }
@@ -174,6 +179,8 @@ public class NodesGenerator : MonoBehaviour
         hasGrid = false;
         hasGraph = false;
         chunks = null;
+        openNodes = null;
+        closedNodes = null;
     }
 
     public Node GetClosestGridNode(Vector3 position)
@@ -217,7 +224,7 @@ public class NodesGenerator : MonoBehaviour
 
         foreach (var hit in hits)
         {
-            Debug.DrawLine(hit.point, hit.point + Vector3.up, Color.white, 10);
+            Debug.DrawLine(hit.point, hit.point + hit.normal, Color.white, 10);
         }
 
         return hits;
@@ -287,6 +294,7 @@ public class NodesGenerator : MonoBehaviour
         lr.positionCount = pathPoints.Count;
         lr.SetPositions(pathPoints.ToArray());
     }
+
 
     private void VisualizePathfinding()
     {

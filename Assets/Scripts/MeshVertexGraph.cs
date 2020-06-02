@@ -70,6 +70,7 @@ public struct NavmeshHit
 {
     public Vector3 point;
     public int triangleIndex;
+    public Vector3 normal;
 
     [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
     public Vector3 barycentric;
@@ -79,5 +80,6 @@ public struct NavmeshHit
         point = hit.point;
         triangleIndex = hit.triangleIndex;
         barycentric = hit.barycentricCoordinate;
+        normal = hit.normal;
     }
 }

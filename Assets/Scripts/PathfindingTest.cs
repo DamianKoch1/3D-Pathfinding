@@ -17,15 +17,9 @@ public class PathfindingTest : MonoBehaviour
     [SerializeField]
     private LayerMask mask;
 
-    [SerializeField]
-    private MeshFilter targetMesh;
-
 
     [SerializeField, Range(0.1f, 5)]
     private float minRecalculateMovement = 1;
-
-    [SerializeField]
-    private PathfindingSettings settings;
 
     private Vector3 prevPosition;
 
@@ -54,34 +48,7 @@ public class PathfindingTest : MonoBehaviour
         return hits;
     }
 
-    //TODO fix path walking on mesh between wrong hits if start is inside mesh
-    [ContextMenu("Find path")]
-    public void FindPath()
-    {
-        //if (graph == null) return;
-        //var lr = GetComponent<LineRenderer>();
-        //var pathPoints = new List<Vector3>();
-        //pathPoints.Add(start.position);
-        //if (hits.Count > 0)
-        //{
-        //    pathPoints.Add(hits[0].point);
-        //    if (hits.Count > 1)
-        //    {
-        //        for (int i = 0; i < hits.Count - 1; i += 2)
-        //        {
-        //            pathPoints.AddRange(graph.FindPath(hits[i].point, hits[i + 1].point, settings));
-        //            if (i + 2 < hits.Count)
-        //            {
-        //                pathPoints.Add(hits[i + 2].point);
-        //            }
-        //        }
-        //        pathPoints.Add(hits[hits.Count - 1].point);
-        //    }
-        //}
-        //pathPoints.Add(target.position);
-        //lr.positionCount = pathPoints.Count;
-        //lr.SetPositions(pathPoints.ToArray());
-    }
+   
 
     [ContextMenu("Clear")]
     public void Clear()
@@ -96,7 +63,6 @@ public class PathfindingTest : MonoBehaviour
         {
             hits = GetNavMeshIntersections(start.position, target.position);
             prevPosition = start.position;
-            FindPath();
         }
 
         Gizmos.color = Color.yellow;
