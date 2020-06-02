@@ -53,7 +53,7 @@ public class Chunk : MonoBehaviour
             case Mode.Overlap:
                 GetIsoValue = (Vector3 pos) =>
                 {
-                    var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, ~gridSettings.navmeshLayer.value);
+                    var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, gridSettings.obstacleLayer);
                     if (overlaps.Length == 0) return 1;
                     var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
                     return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
@@ -97,12 +97,12 @@ public class Chunk : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!gridSettings) return;
+        if (gridSettings.drawExtents)
+        {
+            Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
+        }
         if (grid != null)
         {
-            if (gridSettings.drawExtents)
-            {
-                Gizmos.DrawWireCube(transform.position, gridSettings.chunkSize);
-            }
             if (gridSettings.drawNodes)
             {
                 grid.DrawGizmos(gridSettings.nodeColor, gridSettings.isoLevel);

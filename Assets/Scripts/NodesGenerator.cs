@@ -55,8 +55,8 @@ public class NodesGenerator : MonoBehaviour
         GenerateGrid();
         MarchCubes();
         GenerateGraph();
-        FindGridPath();
-        FindGraphPath();
+        FindGridPath(start.position, goal.position);
+        FindGraphPath(start.position, goal.position);
     }
 
     private void OnValidate()
@@ -105,7 +105,7 @@ public class NodesGenerator : MonoBehaviour
     }
 
 
-    public void ClearOutOfRangeChunks()
+    public void ClearOutdatedChunks()
     {
         hasOutOfRangeChunks = false;
         foreach (var chunk in GetComponentsInChildren<Chunk>())
@@ -158,13 +158,16 @@ public class NodesGenerator : MonoBehaviour
     public void GenerateGraph()
     {
         if (chunks == null) return;
+        foreach (var chunk in chunks)
+        {
+            chunk.GenerateGraph();
+        }
         for (int x = 0; x < chunkCount.x; x++)
         {
             for (int y = 0; y < chunkCount.y; y++)
             {
                 for (int z = 0; z < chunkCount.z; z++)
                 {
-                    chunks[x, y, z].GenerateGraph();
                     if (x > 0)
                     {
                         chunks[x - 1, y, z].graph.xNeighbour = chunks[x, y, z].graph;
@@ -251,47 +254,48 @@ public class NodesGenerator : MonoBehaviour
         return hits;
     }
 
-    public void FindGridPath()
+    public List<Vector3> FindGridPath(Vector3 start, Vector3 goal)
     {
-        if (chunks == null) return;
+        var pathPoints = new List<Vector3>();
+        if (chunks == null) return pathPoints;
         if (!hasGrid)
         {
             GenerateGrid();
         }
 
         var lr = GetComponent<LineRenderer>();
-        var pathPoints = new List<Vector3>();
 
-        pathPoints.Add(start.position);
+        pathPoints.Add(start);
 
-        var startNode = GetClosestGridNode(start.position);
-        var goalNode = GetClosestGridNode(goal.position);
+        var startNode = GetClosestGridNode(start);
+        var goalNode = GetClosestGridNode(goal);
 
         pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, gridSettings.isoLevel, out openNodes, out closedNodes));
 
-        pathPoints.Add(goal.position);
+        pathPoints.Add(goal);
 
         lr.positionCount = pathPoints.Count;
         lr.SetPositions(pathPoints.ToArray());
+        return pathPoints;
     }
 
-    public void FindGraphPath()
+    public List<Vector3> FindGraphPath(Vector3 start, Vector3 goal)
     {
-        if (chunks == null) return;
+        var pathPoints = new List<Vector3>();
+        if (chunks == null) return pathPoints;
         if (!hasGraph)
         {
             GenerateGraph();
         }
 
         var lr = GetComponent<LineRenderer>();
-        var pathPoints = new List<Vector3>();
 
-        pathPoints.Add(start.position);
+        pathPoints.Add(start);
 
         openNodes = new SortedSet<Node>();
         closedNodes = new HashSet<Node>();
 
-        var hits = GetNavMeshIntersections(start.position, goal.position);
+        var hits = GetNavMeshIntersections(start, goal);
         if (hits.Count > 0)
         {
             pathPoints.Add(hits[0].point);
@@ -312,10 +316,11 @@ public class NodesGenerator : MonoBehaviour
                 pathPoints.Add(hits[hits.Count - 1].point);
             }
         }
-        pathPoints.Add(goal.position);
+        pathPoints.Add(goal);
 
         lr.positionCount = pathPoints.Count;
         lr.SetPositions(pathPoints.ToArray());
+        return pathPoints;
     }
 
 
@@ -380,9 +385,9 @@ public class NodesGenerator : MonoBehaviour
         {
             child.position = obstacles.position + new Vector3
                 (
-                    Random.Range(0, gridSettings.chunkSize.x),
-                    Random.Range(0, gridSettings.chunkSize.y),
-                    Random.Range(0, gridSettings.chunkSize.z)
+                    Random.Range(0, gridSettings.chunkSize.x * chunkCount.x),
+                    Random.Range(0, gridSettings.chunkSize.y * chunkCount.y),
+                    Random.Range(0, gridSettings.chunkSize.z * chunkCount.z)
                 );
             child.rotation = Random.rotation;
             child.localScale = new Vector3
@@ -393,15 +398,6 @@ public class NodesGenerator : MonoBehaviour
             );
         }
         Physics.SyncTransforms();
-    }
-
-    public void ExpandMeshes()
-    {
-        if (chunks == null) return;
-        foreach (var chunk in chunks)
-        {
-            chunk.ExpandMeshes();
-        }
     }
 
     public void MarchCubes()

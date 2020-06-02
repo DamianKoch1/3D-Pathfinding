@@ -32,9 +32,9 @@ public class OctreeGeneratorEditor : Editor
 
         if (generator.hasOutOfRangeChunks)
         {
-            if (GUILayout.Button("Clear out of range chunks"))
+            if (GUILayout.Button("Clear outdated chunks"))
             {
-                generator.ClearOutOfRangeChunks();
+                generator.ClearOutdatedChunks();
             }
         }
 
@@ -44,24 +44,19 @@ public class OctreeGeneratorEditor : Editor
             generator.GenerateGrid();
         }
 
-        if (GUILayout.Button("Rebuild Graph"))
-        {
-            generator.GenerateGraph();
-        }
-
         if (!generator.hasGrid)
         {
             GUI.enabled = false;
         }
 
-        if (GUILayout.Button("Expand Meshes"))
-        {
-            generator.ExpandMeshes();
-        }
-
         if (GUILayout.Button("March Cubes"))
         {
             generator.MarchCubes();
+        }
+
+        if (GUILayout.Button("Rebuild Graph"))
+        {
+            generator.GenerateGraph();
         }
 
         if (!generator.start || !generator.goal)
@@ -70,7 +65,7 @@ public class OctreeGeneratorEditor : Editor
         }
         if (GUILayout.Button("Find Grid Path"))
         {
-            generator.FindGridPath();
+            generator.FindGridPath(generator.start.position, generator.goal.position);
         }
 
         if (!generator.hasGraph)
@@ -79,7 +74,7 @@ public class OctreeGeneratorEditor : Editor
         }
         if (GUILayout.Button("Find Graph Path"))
         {
-            generator.FindGraphPath();
+            generator.FindGraphPath(generator.start.position, generator.goal.position);
         }
 
 

@@ -23,6 +23,9 @@ MonoBehaviour:
   navmeshLayer:
     serializedVersion: 2
     m_Bits: 256
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 512
   navMeshOffset: 0
   scale: 0.0184
   seed: 6042

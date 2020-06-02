@@ -18,6 +18,9 @@ public class MeshVertexGraph : INodeGraph
     public MeshVertexGraph(MeshFilter filter, Bounds _bounds)
     {
         nodes = new Dictionary<Vector3, Node>();
+
+        bounds = _bounds;
+
         var mesh = filter.sharedMesh;
 
         var localToWorldMatrix = filter.transform.localToWorldMatrix;
@@ -76,34 +79,26 @@ public class MeshVertexGraph : INodeGraph
         {
             if (xNeighbour != null)
             {
-                if ((max.x - node.pos.x) < 0.001f)
+                if ((max.x - node.pos.x) < 0.01f)
                 {
-                    if (xNeighbour.nodes.ContainsKey(node.pos))
-                    {
-                        MergeNeighbours(node, xNeighbour.nodes[node.pos]);
-                    }
+                    //checking if neighbour has key isn't reliable
+                    MergeNeighbours(node, xNeighbour.GetClosestNode(node.pos));
                 }
             }
 
             if (yNeighbour != null)
             {
-                if ((max.y - node.pos.y) < 0.001f)
+                if ((max.y - node.pos.y) < 0.01f)
                 {
-                    if (yNeighbour.nodes.ContainsKey(node.pos))
-                    {
-                        MergeNeighbours(node, yNeighbour.nodes[node.pos]);
-                    }
+                    MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
                 }
             }
 
             if (zNeighbour != null)
             {
-                if ((max.z - node.pos.z) < 0.001f)
+                if (Mathf.Abs(max.z - node.pos.z) < 0.01f)
                 {
-                    if (zNeighbour.nodes.ContainsKey(node.pos))
-                    {
-                        MergeNeighbours(node, zNeighbour.nodes[node.pos]);
-                    }
+                    MergeNeighbours(node, zNeighbour.GetClosestNode(node.pos));
                 }
             }
         }
