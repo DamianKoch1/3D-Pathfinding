@@ -65,7 +65,7 @@ public class OctreeGeneratorEditor : Editor
         }
         if (GUILayout.Button("Find Grid Path"))
         {
-            generator.FindGridPath(generator.start.position, generator.goal.position);
+            generator.FindGridPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
         }
 
         if (!generator.hasGraph)
@@ -74,7 +74,7 @@ public class OctreeGeneratorEditor : Editor
         }
         if (GUILayout.Button("Find Graph Path"))
         {
-            generator.FindGraphPath(generator.start.position, generator.goal.position);
+            generator.FindGraphPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
         }
 
 

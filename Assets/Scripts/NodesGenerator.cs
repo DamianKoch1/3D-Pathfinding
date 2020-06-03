@@ -55,8 +55,8 @@ public class NodesGenerator : MonoBehaviour
         GenerateGrid();
         MarchCubes();
         GenerateGraph();
-        FindGridPath(start.position, goal.position);
-        FindGraphPath(start.position, goal.position);
+        FindGridPath(start.position, goal.position, pathfindingSettings);
+        FindGraphPath(start.position, goal.position, pathfindingSettings);
     }
 
     private void OnValidate()
@@ -254,7 +254,7 @@ public class NodesGenerator : MonoBehaviour
         return hits;
     }
 
-    public List<Vector3> FindGridPath(Vector3 start, Vector3 goal)
+    public List<Vector3> FindGridPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
     {
         var pathPoints = new List<Vector3>();
         if (chunks == null) return pathPoints;
@@ -270,7 +270,7 @@ public class NodesGenerator : MonoBehaviour
         var startNode = GetClosestGridNode(start);
         var goalNode = GetClosestGridNode(goal);
 
-        pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, gridSettings.isoLevel, out openNodes, out closedNodes));
+        pathPoints.AddRange(AStar.FindPath(startNode, goalNode, settings, gridSettings.isoLevel, out openNodes, out closedNodes));
 
         pathPoints.Add(goal);
 
@@ -279,7 +279,7 @@ public class NodesGenerator : MonoBehaviour
         return pathPoints;
     }
 
-    public List<Vector3> FindGraphPath(Vector3 start, Vector3 goal)
+    public List<Vector3> FindGraphPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
     {
         var pathPoints = new List<Vector3>();
         if (chunks == null) return pathPoints;
@@ -306,7 +306,7 @@ public class NodesGenerator : MonoBehaviour
                     var startNode = GetClosestGraphNode(hits[i].point);
                     var goalNode = GetClosestGraphNode(hits[i + 1].point);
 
-                    pathPoints.AddRange(AStar.FindPath(startNode, goalNode, pathfindingSettings, -1, out openNodes, out closedNodes));
+                    pathPoints.AddRange(AStar.FindPath(startNode, goalNode, settings, -1, out openNodes, out closedNodes));
 
                     if (i + 2 < hits.Count)
                     {

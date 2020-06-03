@@ -40,10 +40,10 @@ public class PathFollower : MonoBehaviour
         switch (mode)
         {
             case PathfindingMode.grid:
-                path = generator.FindGridPath(transform.position, target.position);
+                path = generator.FindGridPath(transform.position, target.position, settings);
                 break;
             case PathfindingMode.navmesh:
-                path = generator.FindGraphPath(transform.position, target.position);
+                path = generator.FindGraphPath(transform.position, target.position, settings);
                 break;
         }
     }
