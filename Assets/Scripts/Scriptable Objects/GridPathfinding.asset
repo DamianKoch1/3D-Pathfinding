@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: GridPathfinding
   m_EditorClassIdentifier: 
-  heuristic: 3
-  costIncrease: 1
+  heuristic: 1
+  costIncrease: 2
   benchmark: 1
-  greediness: 0.561
+  greediness: 0.838

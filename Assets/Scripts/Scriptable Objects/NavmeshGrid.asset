@@ -16,7 +16,7 @@ MonoBehaviour:
   drawExtents: 1
   nodeColor: {r: 0, g: 1, b: 0, a: 1}
   chunkSize: {x: 100, y: 100, z: 100}
-  isoLevel: 0.5
+  isoLevel: 0.514
   allowDiagonalNeighbours: 1
   step: {x: 5, y: 5, z: 5}
   mode: 0

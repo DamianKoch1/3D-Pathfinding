@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class AStar
 {
-    public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 10000, int nodeCount = 1000)
+    public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
     {
         int neighbourChecks = 0;
 
@@ -25,7 +25,7 @@ public static class AStar
             sw.Start();
         }
 
-        var startCapacity = nodeCount / 10;
+        var startCapacity = nodeCount / 100;
         Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
         //much faster .Contains than list
