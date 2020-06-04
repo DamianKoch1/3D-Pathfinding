@@ -3,86 +3,92 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(NodesGenerator))]
-public class OctreeGeneratorEditor : Editor
+namespace Pathfinding.Editors
 {
-    public override void OnInspectorGUI()
+    /// <summary>
+    /// Displays buttons to call commonly used functions like generating NavMesh in Editor
+    /// </summary>
+    [CustomEditor(typeof(NodesGenerator))]
+    public class OctreeGeneratorEditor : Editor
     {
-        DrawDefaultInspector();
-
-        var generator = (NodesGenerator)target;
-
-        if (generator.obstacleSettings)
+        public override void OnInspectorGUI()
         {
-            if (GUILayout.Button("Randomize Obstacles"))
+            DrawDefaultInspector();
+
+            var generator = (NodesGenerator)target;
+
+            if (generator.obstacleSettings)
             {
-                generator.RandomizeObstacles();
+                if (GUILayout.Button("Randomize Obstacles"))
+                {
+                    generator.RandomizeObstacles();
+                }
             }
-        }
 
-        if (GUILayout.Button("Generate Chunks"))
-        {
-            generator.GenerateChunks();
-        }
-
-        if (generator.chunks == null)
-        {
-            GUI.enabled = false;
-        }
-
-        if (generator.hasOutOfRangeChunks)
-        {
-            if (GUILayout.Button("Clear outdated chunks"))
+            if (GUILayout.Button("Generate Chunks"))
             {
-                generator.ClearOutdatedChunks();
+                generator.GenerateChunks();
             }
-        }
+
+            if (generator.chunks == null)
+            {
+                GUI.enabled = false;
+            }
+
+            if (generator.hasOutOfRangeChunks)
+            {
+                if (GUILayout.Button("Clear outdated chunks"))
+                {
+                    generator.ClearOutdatedChunks();
+                }
+            }
 
 
-        if (GUILayout.Button("Rebuild Grid"))
-        {
-            generator.GenerateGrid();
-        }
+            if (GUILayout.Button("Rebuild Grid"))
+            {
+                generator.GenerateGrid();
+            }
 
-        if (!generator.hasGrid)
-        {
-            GUI.enabled = false;
-        }
+            if (!generator.hasGrid)
+            {
+                GUI.enabled = false;
+            }
 
-        if (GUILayout.Button("March Cubes"))
-        {
-            generator.MarchCubes();
-        }
+            if (GUILayout.Button("March Cubes"))
+            {
+                generator.MarchCubes();
+            }
 
-        if (GUILayout.Button("Rebuild Graph"))
-        {
-            generator.GenerateGraph();
-        }
+            if (GUILayout.Button("Rebuild Graph"))
+            {
+                generator.GenerateGraph();
+            }
 
-        if (!generator.start || !generator.goal)
-        {
-            GUI.enabled = false;
-        }
-        if (GUILayout.Button("Find Grid Path"))
-        {
-            generator.FindGridPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
-        }
+            if (!generator.start || !generator.goal)
+            {
+                GUI.enabled = false;
+            }
+            if (GUILayout.Button("Find Grid Path"))
+            {
+                generator.FindGridPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
+            }
 
-        if (!generator.hasGraph)
-        {
-            GUI.enabled = false;
-        }
-        if (GUILayout.Button("Find Graph Path"))
-        {
-            generator.FindGraphPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
-        }
+            if (!generator.hasGraph)
+            {
+                GUI.enabled = false;
+            }
+            if (GUILayout.Button("Find Graph Path"))
+            {
+                generator.FindGraphPath(generator.start.position, generator.goal.position, generator.pathfindingSettings);
+            }
 
 
-        GUI.enabled = true;
+            GUI.enabled = true;
 
-        if (GUILayout.Button("Clear"))
-        {
-            generator.Clear();
+            if (GUILayout.Button("Clear"))
+            {
+                generator.Clear();
+            }
         }
     }
 }

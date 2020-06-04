@@ -1,17 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public interface INodeGraph
+namespace Pathfinding
 {
-    IEnumerable<Node> Nodes
+    /// <summary>
+    /// Interface to enable accepting both grid or graph in functions
+    /// </summary>
+    public interface INodeGraph
     {
-        get;
+        IEnumerable<Node> Nodes
+        {
+            get;
+        }
+
+        Node GetClosestNode(Vector3 position);
+
+        void ResetNodes();
+
+        void StoreCrossChunkNeighbours();
     }
-
-    Node GetClosestNode(Vector3 position);
-
-    void ResetNodes();
-
-    void StoreCrossChunkNeighbours();
 }

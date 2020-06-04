@@ -1,137 +1,152 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class MeshVertexGraph : INodeGraph
+namespace Pathfinding
 {
-    public Dictionary<Vector3, Node> nodes;
-
-    public IEnumerable<Node> Nodes => nodes.Values;
-
-    public MeshVertexGraph xNeighbour;
-    public MeshVertexGraph yNeighbour;
-    public MeshVertexGraph zNeighbour;
-
-    public Bounds bounds;
-
-    public MeshVertexGraph(MeshFilter filter, Bounds _bounds)
+    /// <summary>
+    /// Non-uniform any-angle graph of nodes formed from the vertices of a mesh
+    /// </summary>
+    public class MeshVertexGraph : INodeGraph
     {
-        nodes = new Dictionary<Vector3, Node>();
+        public Dictionary<Vector3, Node> nodes;
 
-        bounds = _bounds;
+        public IEnumerable<Node> Nodes => nodes.Values;
 
-        var mesh = filter.sharedMesh;
+        public MeshVertexGraph xNeighbour;
+        public MeshVertexGraph yNeighbour;
+        public MeshVertexGraph zNeighbour;
 
-        var localToWorldMatrix = filter.transform.localToWorldMatrix;
+        public Bounds bounds;
 
-        var verts = mesh.vertices;
-        var tris = mesh.triangles;
-
-        var vertexCount = verts.Length;
-        for (int i = 0; i < vertexCount; i++)
+        /// <summary>
+        /// Creates nodes for each vertex in the mesh, gets neighbours from triangle information
+        /// </summary>
+        /// <param name="filter">Mesh filter that contains the target mesh, need access to its transform to calculate world positions</param>
+        /// <param name="_bounds">Bounds of owning chunk, used to check which nodes are on the bounds (and need to know cross chunk neighbours)</param>
+        public MeshVertexGraph(MeshFilter filter, Bounds _bounds)
         {
-            var pos = localToWorldMatrix.MultiplyPoint3x4(verts[i]);
-            if (nodes.ContainsKey(pos)) continue;
-            nodes.Add(pos, new Node(pos, 1));
-        }
+            nodes = new Dictionary<Vector3, Node>();
 
-        var triangleCount = tris.Length;
-        for (int i = 0; i < triangleCount; i += 3)
-        {
-            var node0 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 0]])];
-            var node1 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 1]])];
-            var node2 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 2]])];
+            bounds = _bounds;
 
-            node0.neighbours.Add(node1);
-            node0.neighbours.Add(node2);
+            var mesh = filter.sharedMesh;
 
-            node1.neighbours.Add(node0);
-            node1.neighbours.Add(node2);
+            var localToWorldMatrix = filter.transform.localToWorldMatrix;
 
-            node2.neighbours.Add(node0);
-            node2.neighbours.Add(node1);
-        }
-    }
+            var verts = mesh.vertices;
+            var tris = mesh.triangles;
 
-    public Node GetClosestNode(Vector3 position)
-    {
-        var orderedNodes = nodes.Values.OrderBy(n => (n.pos - position).sqrMagnitude);
-        return orderedNodes.First();
-    }
-
-    public void ResetNodes()
-    {
-        foreach (var node in nodes.Values)
-        {
-            if (node.F != -1)
+            var vertexCount = verts.Length;
+            for (int i = 0; i < vertexCount; i++)
             {
-                node.cost = -1;
-                node.heuristic = -1;
-            }
-        }
-    }
-
-    public void StoreCrossChunkNeighbours()
-    {
-        var max = bounds.max;
-        foreach (var node in nodes.Values)
-        {
-            if (xNeighbour != null)
-            {
-                if ((max.x - node.pos.x) < 0.01f)
-                {
-                    //checking if neighbour has key isn't reliable
-                    MergeNeighbours(node, xNeighbour.GetClosestNode(node.pos));
-                }
+                var pos = localToWorldMatrix.MultiplyPoint3x4(verts[i]);
+                if (nodes.ContainsKey(pos)) continue;
+                nodes.Add(pos, new Node(pos, 1));
             }
 
-            if (yNeighbour != null)
+            var triangleCount = tris.Length;
+            for (int i = 0; i < triangleCount; i += 3)
             {
-                if ((max.y - node.pos.y) < 0.01f)
-                {
-                    MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
-                }
-            }
+                var node0 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 0]])];
+                var node1 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 1]])];
+                var node2 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 2]])];
 
-            if (zNeighbour != null)
+                node0.neighbours.Add(node1);
+                node0.neighbours.Add(node2);
+
+                node1.neighbours.Add(node0);
+                node1.neighbours.Add(node2);
+
+                node2.neighbours.Add(node0);
+                node2.neighbours.Add(node1);
+            }
+        }
+
+        /// <summary>
+        /// Sorts nodes by distance to position and returns the first one
+        /// </summary>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public Node GetClosestNode(Vector3 position)
+        {
+            var orderedNodes = nodes.Values.OrderBy(n => (n.pos - position).sqrMagnitude);
+            return orderedNodes.First();
+        }
+
+        public void ResetNodes()
+        {
+            foreach (var node in nodes.Values)
             {
-                if (Mathf.Abs(max.z - node.pos.z) < 0.01f)
+                if (node.F != -1)
                 {
-                    MergeNeighbours(node, zNeighbour.GetClosestNode(node.pos));
+                    node.cost = -1;
+                    node.heuristic = -1;
                 }
             }
         }
+
+        public void StoreCrossChunkNeighbours()
+        {
+            var max = bounds.max;
+            foreach (var node in nodes.Values)
+            {
+                if (xNeighbour != null)
+                {
+                    if ((max.x - node.pos.x) < 0.01f)
+                    {
+                        //checking if neighbour has key isn't reliable
+                        MergeNeighbours(node, xNeighbour.GetClosestNode(node.pos));
+                    }
+                }
+
+                if (yNeighbour != null)
+                {
+                    if ((max.y - node.pos.y) < 0.01f)
+                    {
+                        MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
+                    }
+                }
+
+                if (zNeighbour != null)
+                {
+                    if (Mathf.Abs(max.z - node.pos.z) < 0.01f)
+                    {
+                        MergeNeighbours(node, zNeighbour.GetClosestNode(node.pos));
+                    }
+                }
+            }
+        }
+
+        private void MergeNeighbours(Node node1, Node node2)
+        {
+            foreach (var neighbour in node1.neighbours)
+            {
+                node2.neighbours.Add(neighbour);
+            }
+            foreach (var neighbour in node2.neighbours)
+            {
+                node1.neighbours.Add(neighbour);
+            }
+        }
     }
 
-    private void MergeNeighbours(Node node1, Node node2)
+    [System.Serializable]
+    public struct NavmeshHit
     {
-        foreach (var neighbour in node1.neighbours)
+        public Vector3 point;
+        public int triangleIndex;
+        public Vector3 normal;
+
+        [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
+        public Vector3 barycentric;
+
+        public NavmeshHit(RaycastHit hit)
         {
-            node2.neighbours.Add(neighbour);
+            point = hit.point;
+            triangleIndex = hit.triangleIndex;
+            barycentric = hit.barycentricCoordinate;
+            normal = hit.normal;
         }
-        foreach (var neighbour in node2.neighbours)
-        {
-            node1.neighbours.Add(neighbour);
-        }
-    }
-}
-
-[System.Serializable]
-public struct NavmeshHit
-{
-    public Vector3 point;
-    public int triangleIndex;
-    public Vector3 normal;
-
-    [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
-    public Vector3 barycentric;
-
-    public NavmeshHit(RaycastHit hit)
-    {
-        point = hit.point;
-        triangleIndex = hit.triangleIndex;
-        barycentric = hit.barycentricCoordinate;
-        normal = hit.normal;
     }
 }

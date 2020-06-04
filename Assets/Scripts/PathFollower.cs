@@ -1,75 +1,80 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class PathFollower : MonoBehaviour
+namespace Pathfinding
 {
-    [SerializeField]
-    private NodesGenerator generator;
-
-    [SerializeField]
-    private Transform target;
-
-    private List<Vector3> path;
-
-    [SerializeField]
-    private PathfindingMode mode;
-
-    [SerializeField]
-    private PathfindingSettings settings;
-
-    private int idx;
-
-    [SerializeField]
-    private float speed;
-
-    [SerializeField]
-    private float stoppingDistance;
-
-    private Vector3 dir;
-
-
-    void Start()
+    /// <summary>
+    /// Prototype 3D NavMesh Agent
+    /// </summary>
+    public class PathFollower : MonoBehaviour
     {
-        FindPath();
-    }
+        [SerializeField]
+        private NodesGenerator generator;
 
-    private void FindPath()
-    {
-        idx = 1;
-        switch (mode)
+        [SerializeField]
+        private Transform target;
+
+        private List<Vector3> path;
+
+        [SerializeField]
+        private PathfindingMode mode;
+
+        [SerializeField]
+        private PathfindingSettings settings;
+
+        private int idx;
+
+        [SerializeField]
+        private float speed;
+
+        [SerializeField]
+        private float stoppingDistance;
+
+        private Vector3 dir;
+
+
+        void Start()
         {
-            case PathfindingMode.grid:
-                path = generator.FindGridPath(transform.position, target.position, settings);
-                break;
-            case PathfindingMode.navmesh:
-                path = generator.FindGraphPath(transform.position, target.position, settings);
-                break;
+            FindPath();
+        }
+
+        private void FindPath()
+        {
+            idx = 1;
+            switch (mode)
+            {
+                case PathfindingMode.grid:
+                    path = generator.FindGridPath(transform.position, target.position, settings);
+                    break;
+                case PathfindingMode.navmesh:
+                    path = generator.FindGraphPath(transform.position, target.position, settings);
+                    break;
+            }
+        }
+
+        void Update()
+        {
+            if (path == null) return;
+            if (idx >= path.Count) return;
+            var newPos = Vector3.MoveTowards(transform.position, path[idx], speed * Time.deltaTime);
+            if (Vector3.Distance(newPos, path[idx]) <= stoppingDistance)
+            {
+                idx++;
+            }
+            dir = newPos - transform.position;
+            transform.position = newPos;
+            transform.forward = Vector3.Lerp(transform.forward, dir, 0.3f);
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.DrawLine(transform.position, target.position);
         }
     }
 
-    void Update()
+    public enum PathfindingMode
     {
-        if (path == null) return;
-        if (idx >= path.Count) return;
-        var newPos = Vector3.MoveTowards(transform.position, path[idx], speed * Time.deltaTime);
-        if (Vector3.Distance(newPos, path[idx]) <= stoppingDistance)
-        {
-            idx++;
-        }
-        dir = newPos - transform.position;
-        transform.position = newPos;
-        transform.forward = Vector3.Lerp(transform.forward, dir, 0.3f);
+        grid,
+        navmesh
     }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawLine(transform.position, target.position);
-    }
-}
-
-public enum PathfindingMode
-{
-    grid,
-    navmesh
 }

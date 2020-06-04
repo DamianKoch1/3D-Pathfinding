@@ -3,17 +3,20 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(PathfindingTest))]
-public class PathfindingTestEditor : Editor
+namespace Pathfinding.Editors
 {
-    public override void OnInspectorGUI()
+    [CustomEditor(typeof(PathfindingTest))]
+    public class PathfindingTestEditor : Editor
     {
-        DrawDefaultInspector();
-
-        
-        if (GUILayout.Button("Clear"))
+        public override void OnInspectorGUI()
         {
-            ((PathfindingTest)target).Clear();
+            DrawDefaultInspector();
+
+
+            if (GUILayout.Button("Clear"))
+            {
+                ((PathfindingTest)target).Clear();
+            }
         }
     }
 }

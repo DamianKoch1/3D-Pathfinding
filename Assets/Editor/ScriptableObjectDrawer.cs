@@ -2,37 +2,40 @@
 using UnityEngine;
 using UnityEditor;
 
-/// <summary>
-/// Allows expanding of scriptable object references and editing their values
-/// </summary>
-[CustomPropertyDrawer(typeof(ScriptableObject), true)]
-public class ScriptableObjectDrawer : PropertyDrawer
+namespace Pathfinding.Editors
 {
-    private Editor editor;
-
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    /// <summary>
+    /// Allows expanding of scriptable object references and editing their values
+    /// </summary>
+    [CustomPropertyDrawer(typeof(ScriptableObject), true)]
+    public class ScriptableObjectDrawer : PropertyDrawer
     {
-        EditorGUI.PropertyField(position, property, label, true);
+        private Editor editor;
 
-        if (property.objectReferenceValue)
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            property.isExpanded = EditorGUI.Foldout(position, property.isExpanded, GUIContent.none);
-        }
+            EditorGUI.PropertyField(position, property, label, true);
 
-        if (property.isExpanded)
-        {
-            if (!editor)
+            if (property.objectReferenceValue)
             {
-                Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
-                if (!editor) return;
+                property.isExpanded = EditorGUI.Foldout(position, property.isExpanded, GUIContent.none);
             }
-            EditorGUI.indentLevel++;
 
-            editor.OnInspectorGUI();
+            if (property.isExpanded)
+            {
+                if (!editor)
+                {
+                    Editor.CreateCachedEditor(property.objectReferenceValue, null, ref editor);
+                    if (!editor) return;
+                }
+                EditorGUI.indentLevel++;
 
-            EditorGUI.indentLevel--;
+                editor.OnInspectorGUI();
+
+                EditorGUI.indentLevel--;
+            }
+
         }
-        
+
     }
-    
 }
