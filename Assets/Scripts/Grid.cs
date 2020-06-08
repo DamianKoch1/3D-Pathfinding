@@ -184,7 +184,7 @@ namespace Pathfinding
                 {
                     for (int z = 0; z < zSize; z++)
                     {
-                        MergeNeighbours(nodes[xSize - 1, y, z], xNeighbour.nodes[0, y, z]);
+                        Node.MergeNeighbours(nodes[xSize - 1, y, z], xNeighbour.nodes[0, y, z]);
                     }
                 }
             }
@@ -195,7 +195,7 @@ namespace Pathfinding
                 {
                     for (int z = 0; z < zSize; z++)
                     {
-                        MergeNeighbours(nodes[x, ySize - 1, z], yNeighbour.nodes[x, 0, z]);
+                        Node.MergeNeighbours(nodes[x, ySize - 1, z], yNeighbour.nodes[x, 0, z]);
                     }
                 }
             }
@@ -206,29 +206,14 @@ namespace Pathfinding
                 {
                     for (int y = 0; y < ySize; y++)
                     {
-                        MergeNeighbours(nodes[x, y, zSize - 1], zNeighbour.nodes[x, y, 0]);
+                        Node.MergeNeighbours(nodes[x, y, zSize - 1], zNeighbour.nodes[x, y, 0]);
                     }
                 }
             }
 
         }
 
-        /// <summary>
-        /// Merges neighbours of node1 and node2, Results in nodes being 2 steps away getting added too, shouldn't matter too much for pathfinding
-        /// </summary>
-        /// <param name="node1"></param>
-        /// <param name="node2"></param>
-        private void MergeNeighbours(Node node1, Node node2)
-        {
-            foreach (var neighbour in node1.neighbours)
-            {
-                node2.neighbours.Add(neighbour);
-            }
-            foreach (var neighbour in node2.neighbours)
-            {
-                node1.neighbours.Add(neighbour);
-            }
-        }
+       
 
         //TODO error if node isnt walkable, should also find adjacent node closest to target instead
         /// <summary>

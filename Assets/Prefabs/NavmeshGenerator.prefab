@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 708539449575241504}
   - component: {fileID: 708539449575241505}
   - component: {fileID: 708539449575241519}
+  - component: {fileID: 1286607744020176455}
   m_Layer: 8
   m_Name: NavmeshGenerator
   m_TagString: Untagged
@@ -49,11 +50,16 @@ MonoBehaviour:
   pathfindingSettings: {fileID: 11400000, guid: a0fcd3c5fe6e8524992fc7656e1f7a1d,
     type: 2}
   start: {fileID: 0}
-  end: {fileID: 0}
+  goal: {fileID: 0}
   obstacles: {fileID: 0}
   chunkCount: {x: 0, y: 0, z: 0}
   chunkPrefab: {fileID: 1922032870843716596, guid: d7a4f35e7f71e6149aa9d2f912ef412b,
     type: 3}
+  autoGenerate: 0
+  visualizePathfinding: 0
+  hasOutOfRangeChunks: 0
+  hasGrid: 0
+  hasGraph: 0
 --- !u!120 &708539449575241519
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -147,3 +153,40 @@ LineRenderer:
     generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 0
+--- !u!23 &1286607744020176455
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 708539449575241509}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 8199b905c768f894c86f01c29eca18b7, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0

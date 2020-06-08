@@ -11,7 +11,7 @@ namespace Pathfinding
     {
         public Vector3 pos;
 
-        public Node previousPathNode;
+        public Node parent;
 
         public float heuristic = -1;
 
@@ -75,6 +75,23 @@ namespace Pathfinding
         public override int GetHashCode()
         {
             return pos.GetHashCode();
+        }
+
+        /// <summary>
+        /// Merges neighbours of node1 and node2, Results in nodes being 2 steps away getting added too, shouldn't matter too much for pathfinding
+        /// </summary>
+        /// <param name="node1"></param>
+        /// <param name="node2"></param>
+        public static void MergeNeighbours(Node node1, Node node2)
+        {
+            foreach (var neighbour in node1.neighbours)
+            {
+                node2.neighbours.Add(neighbour);
+            }
+            foreach (var neighbour in node2.neighbours)
+            {
+                node1.neighbours.Add(neighbour);
+            }
         }
     }
 }

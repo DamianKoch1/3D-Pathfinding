@@ -23,10 +23,6 @@ namespace Pathfinding
 
         public Mode mode;
 
-        public LayerMask navmeshLayer;
-
-        public LayerMask obstacleLayer;
-
         [Header("Overlap settings")]
         [Range(0, 10)]
         public float navMeshOffset;

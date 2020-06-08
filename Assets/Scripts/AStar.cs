@@ -61,7 +61,6 @@ namespace Pathfinding.Algorithms
                 current = first;
                 openNodes.Remove(first);
                 closedNodes.Add(first);
-                closedNodes.Contains(first);
 
                 foreach (var neighbour in current.neighbours)
                 {
@@ -73,9 +72,9 @@ namespace Pathfinding.Algorithms
                             if (!openNodes.Contains(neighbour))
                             {
                                 neighbour.costHeuristicBalance = settings.greediness;
-                                neighbour.previousPathNode = current;
+                                neighbour.parent = current;
                                 neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
-                                neighbour.cost = current.cost + settings.CostIncrease(neighbour);
+                                neighbour.cost = current.cost + settings.CostIncrease(current.pos, neighbour.pos);
 
                                 openNodes.Add(neighbour);
                             }
@@ -90,21 +89,20 @@ namespace Pathfinding.Algorithms
                 return path;
             }
 
-            Node temp = current;
             path.Push(goal.pos);
+            Node temp = goal.parent;
             while (temp != null)
             {
                 pathLength += Vector3.Distance(path.Peek(), temp.pos);
                 path.Push(temp.pos);
-                temp = temp.previousPathNode;
-                if (temp.pos == start.pos) break;
+                if (temp == start) break;
+                temp = temp.parent;
             }
-            pathLength += Vector3.Distance(path.Peek(), start.pos);
 
             if (settings.benchmark)
             {
                 sw.Stop();
-                Debug.Log("Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
+                Debug.Log("A*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
             }
 
             return path;

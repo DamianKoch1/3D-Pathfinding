@@ -15,8 +15,6 @@ namespace Pathfinding
 
         public MeshVertexGraph graph;
 
-
-
         public int x;
 
         public int y;
@@ -68,7 +66,7 @@ namespace Pathfinding
                 case Mode.Overlap:
                     GetIsoValue = (Vector3 pos) =>
                     {
-                        var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, gridSettings.obstacleLayer);
+                        var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, LayerMask.GetMask(NodesGenerator.OBSTACLE_LAYER));
                         if (overlaps.Length == 0) return 1;
                         var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
                         return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
@@ -162,7 +160,7 @@ namespace Pathfinding
             var combine = new List<CombineInstance>();
             var filter = GetComponent<MeshFilter>();
             var collider = GetComponent<MeshCollider>();
-            foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.chunkSize / 2, Quaternion.identity, ~gridSettings.navmeshLayer.value))
+            foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.chunkSize / 2, Quaternion.identity, ~LayerMask.GetMask(NodesGenerator.NAVMESH_LAYER)))
             {
                 var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
                 if (!mesh) continue;

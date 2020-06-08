@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Pathfinding.Algorithms;
 
 namespace Pathfinding
 {
@@ -10,6 +9,10 @@ namespace Pathfinding
     /// </summary>
     public class NodesGenerator : MonoBehaviour
     {
+        public const string NAVMESH_LAYER = "NavMesh";
+
+        public const string OBSTACLE_LAYER = "NavMeshObstacle";
+
         public GridGenerationSettings gridSettings;
 
         public ObstacleGenerationSettings obstacleSettings;
@@ -275,7 +278,7 @@ namespace Pathfinding
             int maxRaycasts = 100;
 
             //RaycastAll only giving first hit since next rays start inside previous face
-            while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), gridSettings.navmeshLayer))
+            while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), LayerMask.GetMask(NAVMESH_LAYER)))
             {
                 maxRaycasts--;
                 hits.Add(new NavmeshHit(hit));
@@ -311,14 +314,17 @@ namespace Pathfinding
 
             var lr = GetComponent<LineRenderer>();
 
-            pathPoints.Add(start);
+            var tempNodes = new TempNodeDictionary();
 
-            var startNode = GetClosestGridNode(start);
-            var goalNode = GetClosestGridNode(goal);
+            var gridStart = GetClosestGridNode(start);
+            var gridGoal = GetClosestGridNode(goal);
 
-            pathPoints.AddRange(AStar.FindPath(startNode, goalNode, settings, gridSettings.isoLevel, out openNodes, out closedNodes));
+            tempNodes.AddNode(gridStart, start);
+            tempNodes.AddNode(gridGoal, goal);
 
-            pathPoints.Add(goal);
+            pathPoints.AddRange(settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes));
+
+            tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
 
             lr.positionCount = pathPoints.Count;
             lr.SetPositions(pathPoints.ToArray());
@@ -343,34 +349,49 @@ namespace Pathfinding
 
             var lr = GetComponent<LineRenderer>();
 
-            pathPoints.Add(start);
+            var tempNodes = new TempNodeDictionary();
+
 
             openNodes = new SortedSet<Node>();
             closedNodes = new HashSet<Node>();
 
+
+            var nodesClosestToHit = new Dictionary<int, Node>();
+
             var hits = GetNavMeshIntersections(start, goal);
-            if (hits.Count > 0)
+            if (hits.Count > 1)
             {
-                pathPoints.Add(hits[0].point);
-                if (hits.Count > 1)
+                for (int i = 0; i < hits.Count - 1; i += 2)
                 {
-                    for (int i = 0; i < hits.Count - 1; i += 2)
+                    nodesClosestToHit.Add(i, GetClosestGraphNode(hits[i].point));
+                    nodesClosestToHit.Add(i + 1, GetClosestGraphNode(hits[i + 1].point));
+                    if (i > 0)
                     {
-                        var startNode = GetClosestGraphNode(hits[i].point);
-                        var goalNode = GetClosestGraphNode(hits[i + 1].point);
-
-                        pathPoints.AddRange(AStar.FindPath(startNode, goalNode, settings, -1, out openNodes, out closedNodes));
-
-                        if (i + 2 < hits.Count)
-                        {
-                            pathPoints.Add(hits[i + 2].point);
-                        }
+                        tempNodes.AddNode(nodesClosestToHit[i], hits[i].point);
+                        tempNodes[nodesClosestToHit[i]].neighbours.Add(tempNodes[nodesClosestToHit[i - 1]]);
+                        tempNodes[nodesClosestToHit[i - 1]].neighbours.Add(tempNodes[nodesClosestToHit[i]]);
                     }
-                    pathPoints.Add(hits[hits.Count - 1].point);
-                }
-            }
-            pathPoints.Add(goal);
+                    if (i < hits.Count - 2)
+                    {
+                        tempNodes.AddNode(nodesClosestToHit[i + 1], hits[i + 1].point);
+                    }
 
+
+                    if (i + 2 < hits.Count)
+                    {
+                        pathPoints.Add(hits[i + 2].point);
+                    }
+                }
+                tempNodes.AddNode(nodesClosestToHit[0], start);
+                tempNodes.AddNode(nodesClosestToHit[hits.Count - 1], goal);
+            }
+            else return pathPoints;
+            pathPoints.AddRange(settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes));
+            
+            //??
+            pathPoints.RemoveAt(0);
+
+            tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
             lr.positionCount = pathPoints.Count;
             lr.SetPositions(pathPoints.ToArray());
             return pathPoints;
@@ -384,6 +405,7 @@ namespace Pathfinding
             if (!visualizePathfinding) return;
             if (openNodes == null) return;
             if (closedNodes == null) return;
+            if (openNodes.Count == 0 || closedNodes.Count == 0) return;
             var lowestF = closedNodes.OrderBy(n => n.F).First().F;
             float highestF = 0;
             if (openNodes.Count == 0)
@@ -468,6 +490,13 @@ namespace Pathfinding
             {
                 chunk.MarchCubes();
             }
+        }
+
+        public void ToggleNavMesh()
+        {
+            var material = GetComponent<MeshRenderer>().sharedMaterial;
+            var cutOff = material.GetFloat("_Cutoff");
+            material.SetFloat("_Cutoff", cutOff == 0 ? 1 : 0);
         }
 
         private void OnDrawGizmos()

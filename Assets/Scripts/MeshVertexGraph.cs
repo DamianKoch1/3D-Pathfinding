@@ -36,6 +36,7 @@ namespace Pathfinding
 
             var verts = mesh.vertices;
             var tris = mesh.triangles;
+            var normals = mesh.normals;
 
             var vertexCount = verts.Length;
             for (int i = 0; i < vertexCount; i++)
@@ -48,7 +49,7 @@ namespace Pathfinding
             var triangleCount = tris.Length;
             for (int i = 0; i < triangleCount; i += 3)
             {
-                var node0 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 0]])];
+                var node0 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i]])];
                 var node1 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 1]])];
                 var node2 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 2]])];
 
@@ -95,8 +96,12 @@ namespace Pathfinding
                 {
                     if ((max.x - node.pos.x) < 0.01f)
                     {
-                        //checking if neighbour has key isn't reliable
-                        MergeNeighbours(node, xNeighbour.GetClosestNode(node.pos));
+                        //dictionary lookup isn't reliable enough
+                        if (!xNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        {
+                            neighbour = xNeighbour.GetClosestNode(node.pos);
+                        }
+                        Node.MergeNeighbours(node, neighbour);
                     }
                 }
 
@@ -104,29 +109,25 @@ namespace Pathfinding
                 {
                     if ((max.y - node.pos.y) < 0.01f)
                     {
-                        MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
+                        if (!yNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        {
+                            neighbour = yNeighbour.GetClosestNode(node.pos);
+                        }
+                        Node.MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
                     }
                 }
 
                 if (zNeighbour != null)
                 {
-                    if (Mathf.Abs(max.z - node.pos.z) < 0.01f)
+                    if ((max.z - node.pos.z) < 0.01f)
                     {
-                        MergeNeighbours(node, zNeighbour.GetClosestNode(node.pos));
+                        if (!zNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        {
+                            neighbour = zNeighbour.GetClosestNode(node.pos);
+                        }
+                        Node.MergeNeighbours(node, neighbour);
                     }
                 }
-            }
-        }
-
-        private void MergeNeighbours(Node node1, Node node2)
-        {
-            foreach (var neighbour in node1.neighbours)
-            {
-                node2.neighbours.Add(neighbour);
-            }
-            foreach (var neighbour in node2.neighbours)
-            {
-                node1.neighbours.Add(neighbour);
             }
         }
     }

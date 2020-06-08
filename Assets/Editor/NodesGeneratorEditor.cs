@@ -89,6 +89,11 @@ namespace Pathfinding.Editors
             {
                 generator.Clear();
             }
+
+            if (GUILayout.Button("Toggle NavMesh"))
+            {
+                generator.ToggleNavMesh();
+            }
         }
     }
 }
