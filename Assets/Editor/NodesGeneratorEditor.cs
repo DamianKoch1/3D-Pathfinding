@@ -9,7 +9,7 @@ namespace Pathfinding.Editors
     /// Displays buttons to call commonly used functions like generating NavMesh in Editor
     /// </summary>
     [CustomEditor(typeof(NodesGenerator))]
-    public class OctreeGeneratorEditor : Editor
+    public class NodesGeneratorEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -62,6 +62,11 @@ namespace Pathfinding.Editors
             if (GUILayout.Button("Rebuild Graph"))
             {
                 generator.GenerateGraph();
+            }
+
+            if (GUILayout.Button("Assign Neighbours"))
+            {
+                generator.AssignNeighbours();
             }
 
             if (!generator.start || !generator.goal)

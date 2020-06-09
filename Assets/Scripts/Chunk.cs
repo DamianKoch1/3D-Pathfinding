@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Pathfinding.NavMesh;
+using Pathfinding.Serialization;
 
 namespace Pathfinding
 {
@@ -20,6 +21,10 @@ namespace Pathfinding
         public int y;
 
         public int z;
+
+        public Chunk xNeighbour;
+        public Chunk yNeighbour;
+        public Chunk zNeighbour;
 
 
         [SerializeField]
@@ -63,7 +68,7 @@ namespace Pathfinding
             System.Func<Vector3, float> GetIsoValue = null;
             switch (gridSettings.mode)
             {
-                case Mode.Overlap:
+                case GenerationMode.Overlap:
                     GetIsoValue = (Vector3 pos) =>
                     {
                         var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, LayerMask.GetMask(NodesGenerator.OBSTACLE_LAYER));
@@ -72,24 +77,12 @@ namespace Pathfinding
                         return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
                     };
                     break;
-                case Mode.Noise:
-                    if (gridSettings.useRandomSeed)
-                    {
-                        gridSettings.seed = Random.Range(0, 10000);
-                        Noise.Seed = gridSettings.seed;
-                    }
+                case GenerationMode.Noise:
                     GetIsoValue = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) / 255f;
                     break;
             }
 
-            if (grid == null)
-            {
-                grid = new Grid(transform.position, gridSettings, GetIsoValue);
-            }
-            else
-            {
-                grid.Update(gridSettings, GetIsoValue);
-            }
+            grid = new Grid(transform.position, gridSettings, GetIsoValue, this);
         }
 
         /// <summary>
@@ -97,7 +90,13 @@ namespace Pathfinding
         /// </summary>
         public void GenerateGraph()
         {
-            graph = new MeshVertexGraph(GetComponent<MeshFilter>(), bounds);
+            graph = new MeshVertexGraph(GetComponent<MeshFilter>(), bounds, this);
+        }
+
+        public void AssignNeighbours()
+        {
+            grid?.AssignNeighbours();
+            graph?.AssignNeighbours();
         }
 
         /// <summary>
@@ -127,7 +126,7 @@ namespace Pathfinding
                 }
             }
 
-            if (graph != null)
+            if (graph?.nodes != null)
             {
                 if (drawNodes || drawNeighbours)
                 {
@@ -138,7 +137,7 @@ namespace Pathfinding
                             Gizmos.color = Color.green;
                             Gizmos.DrawWireCube(node.pos, Vector3.one * 0.1f);
                         }
-                        if (drawNeighbours)
+                        if (drawNeighbours && node.neighbours != null)
                         {
                             Gizmos.color = Color.magenta;
                             foreach (var neighbour in node.neighbours)
@@ -207,6 +206,15 @@ namespace Pathfinding
             var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
             filter.sharedMesh = mesh;
             collider.sharedMesh = mesh;
+        }
+    }
+
+
+    [System.Serializable]
+    public class FlattenedChunk3DArray : Flattened3DArray<Chunk>
+    {
+        public FlattenedChunk3DArray(Flattened3DArray<Chunk> other) : base(other)
+        {
         }
     }
 }

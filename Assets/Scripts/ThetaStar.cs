@@ -64,7 +64,7 @@ namespace Pathfinding.Algorithms
                 openNodes.Remove(first);
                 closedNodes.Add(first);
 
-                foreach (Node neighbour in current.neighbours)
+                foreach (var neighbour in current.neighbours)
                 {
                     neighbourChecks++;
                     if (neighbour.isoValue > isoLevel)
@@ -86,7 +86,7 @@ namespace Pathfinding.Algorithms
 
             if (!closedNodes.Contains(goal))
             {
-                Debug.Log("no goal, " + numIterations + " iterations");
+                Debug.Log("no goal, " + numIterations + " iterations, closed: " + closedNodes.Count + ", opened: " + openNodes.Count);
                 return path;
             }
 
@@ -103,7 +103,7 @@ namespace Pathfinding.Algorithms
             if (settings.benchmark)
             {
                 sw.Stop();
-                Debug.Log("Theta*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
+                Debug.Log("Theta*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", opened: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
             }
 
             return path;

@@ -55,7 +55,11 @@ namespace Pathfinding
         void Update()
         {
             if (path == null) return;
-            if (idx >= path.Count) return;
+            if (idx >= path.Count)
+            {
+                path = null;
+                return;
+            }
             var newPos = Vector3.MoveTowards(transform.position, path[idx], speed * Time.deltaTime);
             if (Vector3.Distance(newPos, path[idx]) <= stoppingDistance)
             {
@@ -68,7 +72,11 @@ namespace Pathfinding
 
         private void OnDrawGizmos()
         {
-            Gizmos.DrawLine(transform.position, target.position);
+            if (path == null) return;
+            for (int i = 0; i < path.Count - 2; i++)
+            {
+                Gizmos.DrawLine(path[i], path[i + 1]);
+            }
         }
     }
 

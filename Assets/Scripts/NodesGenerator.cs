@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Pathfinding.Serialization;
+using SimplexNoise;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -12,6 +14,7 @@ namespace Pathfinding
         public const string NAVMESH_LAYER = "NavMesh";
 
         public const string OBSTACLE_LAYER = "NavMeshObstacle";
+
 
         public GridGenerationSettings gridSettings;
 
@@ -32,7 +35,7 @@ namespace Pathfinding
         [SerializeField]
         private Chunk chunkPrefab;
 
-        public Chunk[,,] chunks;
+        public FlattenedChunk3DArray chunks;
 
         [SerializeField]
         private bool autoGenerate;
@@ -57,10 +60,11 @@ namespace Pathfinding
         //used for profiling
         private void Start()
         {
-            GenerateChunks();
-            GenerateGrid();
-            MarchCubes();
-            GenerateGraph();
+            //GenerateChunks();
+            //GenerateGrid();
+            //MarchCubes();
+            //GenerateGraph();
+            AssignNeighbours();
             FindGridPath(start.position, goal.position, pathfindingSettings);
             FindGraphPath(start.position, goal.position, pathfindingSettings);
         }
@@ -81,7 +85,7 @@ namespace Pathfinding
         /// </summary>
         public void GenerateChunks()
         {
-            chunks = new Chunk[chunkCount.x, chunkCount.y, chunkCount.z];
+            chunks = new FlattenedChunk3DArray(FlattenedArrayUtils.New<Chunk>(chunkCount.x, chunkCount.y, chunkCount.z));
             foreach (var chunk in GetComponentsInChildren<Chunk>())
             {
                 bool outOfXRange = chunk.x >= chunkCount.x;
@@ -106,6 +110,20 @@ namespace Pathfinding
                         {
                             var chunk = Instantiate(chunkPrefab.gameObject, transform).GetComponent<Chunk>();
                             chunks[x, y, z] = chunk;
+                        }
+                        if (x > 0)
+                        {
+                            chunks[x - 1, y, z].xNeighbour = chunks[x, y, z];
+                        }
+
+                        if (y > 0)
+                        {
+                            chunks[x, y - 1, z].yNeighbour = chunks[x, y, z];
+                        }
+
+                        if (z > 0)
+                        {
+                            chunks[x, y, z - 1].zNeighbour = chunks[x, y, z];
                         }
                         chunks[x, y, z].Initialize(gridSettings, x, y, z);
                     }
@@ -138,33 +156,21 @@ namespace Pathfinding
         public void GenerateGrid()
         {
             if (chunks == null) return;
-            for (int x = 0; x < chunkCount.x; x++)
+            if (gridSettings.mode == GenerationMode.Noise)
             {
-                for (int y = 0; y < chunkCount.y; y++)
+                if (gridSettings.useRandomSeed)
                 {
-                    for (int z = 0; z < chunkCount.z; z++)
-                    {
-                        chunks[x, y, z].GenerateGrid();
-                        if (x > 0)
-                        {
-                            chunks[x - 1, y, z].grid.xNeighbour = chunks[x, y, z].grid;
-                        }
-
-                        if (y > 0)
-                        {
-                            chunks[x, y - 1, z].grid.yNeighbour = chunks[x, y, z].grid;
-                        }
-
-                        if (z > 0)
-                        {
-                            chunks[x, y, z - 1].grid.zNeighbour = chunks[x, y, z].grid;
-                        }
-                    }
+                    gridSettings.seed = Random.Range(0, 10000);
+                    Noise.Seed = gridSettings.seed;
                 }
             }
-            foreach (var chunk in chunks)
+            foreach (var chunk in chunks.items)
             {
-                chunk.grid.StoreCrossChunkNeighbours();
+                chunk.GenerateGrid();
+            }
+            foreach (var chunk in chunks.items)
+            {
+                chunk.grid.FindCrossChunkNeighbours();
             }
             hasGrid = true;
         }
@@ -175,36 +181,13 @@ namespace Pathfinding
         public void GenerateGraph()
         {
             if (chunks == null) return;
-            foreach (var chunk in chunks)
+            foreach (var chunk in chunks.items)
             {
                 chunk.GenerateGraph();
             }
-            for (int x = 0; x < chunkCount.x; x++)
+            foreach (var chunk in chunks.items)
             {
-                for (int y = 0; y < chunkCount.y; y++)
-                {
-                    for (int z = 0; z < chunkCount.z; z++)
-                    {
-                        if (x > 0)
-                        {
-                            chunks[x - 1, y, z].graph.xNeighbour = chunks[x, y, z].graph;
-                        }
-
-                        if (y > 0)
-                        {
-                            chunks[x, y - 1, z].graph.yNeighbour = chunks[x, y, z].graph;
-                        }
-
-                        if (z > 0)
-                        {
-                            chunks[x, y, z - 1].graph.zNeighbour = chunks[x, y, z].graph;
-                        }
-                    }
-                }
-            }
-            foreach (var chunk in chunks)
-            {
-                chunk.graph.StoreCrossChunkNeighbours();
+                chunk.graph.FindCrossChunkNeighbours();
             }
             hasGraph = true;
         }
@@ -215,14 +198,13 @@ namespace Pathfinding
         public void Clear()
         {
             if (chunks == null) return;
-            foreach (var chunk in GetComponentsInChildren<Chunk>())
-            {
-                DestroyImmediate(chunk.gameObject);
-            }
             GetComponent<LineRenderer>().positionCount = 0;
+            foreach (var chunk in chunks.items)
+            {
+                chunk.Clear();
+            }
             hasGrid = false;
             hasGraph = false;
-            chunks = null;
             openNodes = null;
             closedNodes = null;
         }
@@ -332,6 +314,17 @@ namespace Pathfinding
         }
 
         /// <summary>
+        /// The only thing you need to call after hot reloading, finds the actual nodes of each nodes neighbour references and stores them
+        /// </summary>
+        public void AssignNeighbours()
+        {
+            foreach (var chunk in chunks.items)
+            {
+                chunk.AssignNeighbours();
+            }
+        }
+
+        /// <summary>
         /// Finds path from start to goal using NavMesh
         /// </summary>
         /// <param name="start"></param>
@@ -368,8 +361,12 @@ namespace Pathfinding
                     if (i > 0)
                     {
                         tempNodes.AddNode(nodesClosestToHit[i], hits[i].point);
-                        tempNodes[nodesClosestToHit[i]].neighbours.Add(tempNodes[nodesClosestToHit[i - 1]]);
-                        tempNodes[nodesClosestToHit[i - 1]].neighbours.Add(tempNodes[nodesClosestToHit[i]]);
+                        //link navmesh exiting hits with entering hits
+                        if (i % 2 == 0)
+                        {
+                            tempNodes[nodesClosestToHit[i]].neighbours.Add(tempNodes[nodesClosestToHit[i - 1]]);
+                            tempNodes[nodesClosestToHit[i - 1]].neighbours.Add(tempNodes[nodesClosestToHit[i]]);
+                        }
                     }
                     if (i < hits.Count - 2)
                     {
@@ -387,7 +384,7 @@ namespace Pathfinding
             }
             else return pathPoints;
             pathPoints.AddRange(settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes));
-            
+
             //??
             pathPoints.RemoveAt(0);
 
@@ -403,28 +400,36 @@ namespace Pathfinding
         private void VisualizePathfinding()
         {
             if (!visualizePathfinding) return;
-            if (openNodes == null) return;
-            if (closedNodes == null) return;
-            if (openNodes.Count == 0 || closedNodes.Count == 0) return;
-            var lowestF = closedNodes.OrderBy(n => n.F).First().F;
+            if (openNodes == null && closedNodes == null) return;
+            float lowestF = 0;
             float highestF = 0;
-            if (openNodes.Count == 0)
-            {
-                highestF = closedNodes.OrderBy(n => n.F).Last().F;
-            }
-            else
+            if (openNodes?.Count > 0)
             {
                 highestF = openNodes.Last().F;
             }
-            foreach (var node in closedNodes)
+            else
             {
-                Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
-                Gizmos.DrawCube(node.pos, Vector3.one * 2);
+                highestF = closedNodes.OrderBy(n => n.F).Last().F;
             }
-            foreach (var node in openNodes)
+            if (closedNodes?.Count > 0)
             {
-                Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
-                Gizmos.DrawCube(node.pos, Vector3.one);
+                lowestF = closedNodes.OrderBy(n => n.F).First().F;
+            }
+            if (openNodes?.Count > 0)
+            {
+                foreach (var node in openNodes)
+                {
+                    Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
+                    Gizmos.DrawCube(node.pos, Vector3.one);
+                }
+            }
+            if (closedNodes?.Count > 0)
+            {
+                foreach (var node in closedNodes)
+                {
+                    Gizmos.color = Color.Lerp(Color.green, Color.red, (node.F - lowestF) / (highestF - lowestF));
+                    Gizmos.DrawCube(node.pos, Vector3.one * 2);
+                }
             }
         }
 
@@ -486,7 +491,7 @@ namespace Pathfinding
         public void MarchCubes()
         {
             if (chunks == null) return;
-            foreach (var chunk in chunks)
+            foreach (var chunk in chunks.items)
             {
                 chunk.MarchCubes();
             }

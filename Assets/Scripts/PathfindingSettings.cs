@@ -7,13 +7,13 @@ namespace Pathfinding
     [CreateAssetMenu]
     public class PathfindingSettings : ScriptableObject
     {
-        [Tooltip("AStar: Combines cost with estimated goal distance to find optimal path\n ThetaStar: Similar to AStar, but uses LineOfSight checks to skip some nodes")]
+        [Tooltip("AStar: Combines cost with estimated goal distance to find optimal path \nThetaStar: Similar to AStar, but uses LineOfSight checks to skip some nodes")]
         public Algorithm algorithm;
 
         [Tooltip("Euclidean: line distance \nManhattan: total coordinate delta \nChebyshev: highest coordinate delta \nOctile: minimum grid path length allowing diagonal movement")]
         public HeuristicsFunction heuristic;
 
-        [Tooltip("One: always add 1 cost per node (not recommended, unscaled with distance)\n Euclidean: Add line distance as cost\n Manhattan: Add total coordinate delta as cost")]
+        [Tooltip("One: always add 1 cost per node (not recommended, unscaled with distance) \nEuclidean: Add line distance as cost \nManhattan: Add total coordinate delta as cost")]
         public CostIncreaseFunction costIncrease;
 
 
@@ -69,24 +69,24 @@ namespace Pathfinding
         }
 
         public enum HeuristicsFunction
-    {
-        euclidean,
-        manhattan,
-        chebyshev,
-        octile
-    }
+        {
+            euclidean,
+            manhattan,
+            chebyshev,
+            octile
+        }
 
-    public enum CostIncreaseFunction
-    {
-        one,
-        euclidean,
-        manhattan
-    }
+        public enum CostIncreaseFunction
+        {
+            one,
+            euclidean,
+            manhattan
+        }
 
-    public enum Algorithm
-    {
-        aStar,
-        thetaStar,
-    }
+        public enum Algorithm
+        {
+            aStar,
+            thetaStar,
+        }
     }
 }

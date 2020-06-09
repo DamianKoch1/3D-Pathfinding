@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Pathfinding.Serialization;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding
@@ -7,24 +9,28 @@ namespace Pathfinding
     /// <summary>
     /// Node used in grids / graphs / pathfinding, knows its world position, (grid index), neighbours, cost, heuristic, and previous node of path
     /// </summary>
-    public class Node : IComparable<Node>
+    [Serializable]
+    public class Node : IComparable<Node>, IEquatable<Node>
     {
         public Vector3 pos;
 
         public Node parent;
 
+        [NonSerialized]
         public float heuristic = -1;
 
+        [NonSerialized]
         public float cost = -1;
-
-        public int x;
-        public int y;
-        public int z;
 
         public float isoValue;
 
-        public HashSet<Node> neighbours;
+        [NonSerialized]
+        public List<Node> neighbours;
 
+        [SerializeField]
+        public List<NodeIdentifier> neighbourIdentifiers;
+
+        [NonSerialized]
         public float costHeuristicBalance = 0.5f;
 
         public float F
@@ -39,14 +45,30 @@ namespace Pathfinding
             }
         }
 
-        public Node(Vector3 _pos, float _isoValue, int iX = -1, int iY = -1, int iZ = -1)
+        public Node(Vector3 _pos, float _isoValue)
         {
-            neighbours = new HashSet<Node>();
+            neighbours = new List<Node>(26);
+            neighbourIdentifiers = new List<NodeIdentifier>();
             pos = _pos;
-            x = iX;
-            y = iY;
-            z = iZ;
             isoValue = _isoValue;
+        }
+
+        /// <summary>
+        /// Adds a reference by which the correct node can be found, prevents circular serialization
+        /// </summary>
+        /// <param name="key">key used to find actual node later (grid index / graph position)</param>
+        /// <param name="type">neighbour type (same chunk / x/y/z neighbour)</param>
+        public void AddNeighbourIdentifier(Vector3 key, ChunkNeighbourType type = ChunkNeighbourType.Same)
+        {
+            var identifier = new NodeIdentifier(key, type);
+            if (neighbourIdentifiers.Contains(identifier)) return;
+            neighbourIdentifiers.Add(new NodeIdentifier(key, type));
+        }
+
+        public void AddNeighbour(Node neighbour)
+        {
+            if (neighbours == null) neighbours = new List<Node>(26);
+            neighbours.Add(neighbour);
         }
 
         public void DrawGizmos(Color color, float isoLevel)
@@ -77,21 +99,54 @@ namespace Pathfinding
             return pos.GetHashCode();
         }
 
-        /// <summary>
-        /// Merges neighbours of node1 and node2, Results in nodes being 2 steps away getting added too, shouldn't matter too much for pathfinding
-        /// </summary>
-        /// <param name="node1"></param>
-        /// <param name="node2"></param>
-        public static void MergeNeighbours(Node node1, Node node2)
+        public bool Equals(Node other)
         {
-            foreach (var neighbour in node1.neighbours)
-            {
-                node2.neighbours.Add(neighbour);
-            }
-            foreach (var neighbour in node2.neighbours)
-            {
-                node1.neighbours.Add(neighbour);
-            }
+            return pos.Equals(other.pos);
         }
+    }
+
+
+    [Serializable]
+    public class SerializableNodeDictionary : SerializableDictionary<Vector3, Node>
+    { }
+
+
+    [Serializable]
+    public class FlattenedNode3DArray : Flattened3DArray<Node>
+    {
+        public FlattenedNode3DArray(Flattened3DArray<Node> other) : base(other)
+        {
+        }
+    }
+
+
+    [Serializable]
+    public class NodeIdentifier : IEquatable<NodeIdentifier>
+    {
+        public ChunkNeighbourType chunkNeighbourType;
+        public Vector3 key;
+
+        public NodeIdentifier()
+        { }
+
+        public NodeIdentifier(Vector3 _key, ChunkNeighbourType _type = ChunkNeighbourType.Same)
+        {
+            key = _key;
+            chunkNeighbourType = _type;
+        }
+
+        //this is enough unless chunks have very few nodes which shouldn't happen
+        public bool Equals(NodeIdentifier other)
+        {
+            return key.Equals(other.key);
+        }
+    }
+
+    public enum ChunkNeighbourType
+    {
+        Same,
+        X,
+        Y,
+        Z
     }
 }

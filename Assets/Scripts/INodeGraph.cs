@@ -15,8 +15,10 @@ namespace Pathfinding
 
         Node GetClosestNode(Vector3 position);
 
+        void AssignNeighbours();
+
         void ResetNodes();
 
-        void StoreCrossChunkNeighbours();
+        void FindCrossChunkNeighbours();
     }
 }

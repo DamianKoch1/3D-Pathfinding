@@ -21,7 +21,7 @@ namespace Pathfinding
 
         public Vector3 step;
 
-        public Mode mode;
+        public GenerationMode mode;
 
         [Header("Overlap settings")]
         [Range(0, 10)]
@@ -43,7 +43,7 @@ namespace Pathfinding
         }
     }
 
-    public enum Mode
+    public enum GenerationMode
     {
         Overlap,
         Noise

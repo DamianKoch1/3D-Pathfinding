@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Pathfinding.Serialization;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,15 +9,14 @@ namespace Pathfinding
     /// <summary>
     /// Non-uniform any-angle graph of nodes formed from the vertices of a mesh
     /// </summary>
+    [Serializable]
     public class MeshVertexGraph : INodeGraph
     {
-        public Dictionary<Vector3, Node> nodes;
+        public SerializableNodeDictionary nodes;
 
         public IEnumerable<Node> Nodes => nodes.Values;
 
-        public MeshVertexGraph xNeighbour;
-        public MeshVertexGraph yNeighbour;
-        public MeshVertexGraph zNeighbour;
+        public Chunk owner;
 
         public Bounds bounds;
 
@@ -24,9 +25,11 @@ namespace Pathfinding
         /// </summary>
         /// <param name="filter">Mesh filter that contains the target mesh, need access to its transform to calculate world positions</param>
         /// <param name="_bounds">Bounds of owning chunk, used to check which nodes are on the bounds (and need to know cross chunk neighbours)</param>
-        public MeshVertexGraph(MeshFilter filter, Bounds _bounds)
+        public MeshVertexGraph(MeshFilter filter, Bounds _bounds, Chunk _owner)
         {
-            nodes = new Dictionary<Vector3, Node>();
+            owner = _owner;
+
+            nodes = new SerializableNodeDictionary();
 
             bounds = _bounds;
 
@@ -53,26 +56,36 @@ namespace Pathfinding
                 var node1 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 1]])];
                 var node2 = nodes[localToWorldMatrix.MultiplyPoint3x4(verts[tris[i + 2]])];
 
-                node0.neighbours.Add(node1);
-                node0.neighbours.Add(node2);
+                node0.AddNeighbourIdentifier(node1.pos);
+                node0.AddNeighbourIdentifier(node2.pos);
 
-                node1.neighbours.Add(node0);
-                node1.neighbours.Add(node2);
+                node1.AddNeighbourIdentifier(node0.pos);
+                node1.AddNeighbourIdentifier(node2.pos);
 
-                node2.neighbours.Add(node0);
-                node2.neighbours.Add(node1);
+                node2.AddNeighbourIdentifier(node0.pos);
+                node2.AddNeighbourIdentifier(node1.pos);
             }
         }
 
         /// <summary>
-        /// Sorts nodes by distance to position and returns the first one
+        /// Returns node with smallest distance to position
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
         public Node GetClosestNode(Vector3 position)
         {
-            var orderedNodes = nodes.Values.OrderBy(n => (n.pos - position).sqrMagnitude);
-            return orderedNodes.First();
+            float lowestSqDistance = Mathf.Infinity;
+            Node retVal = null;
+            foreach (var node in nodes.Values)
+            {
+                float newSqDistance = (node.pos - position).sqrMagnitude;
+                if ((node.pos - position).sqrMagnitude < lowestSqDistance)
+                {
+                    retVal = node;
+                    lowestSqDistance = newSqDistance;
+                }
+            }
+            return retVal;
         }
 
         public void ResetNodes()
@@ -87,52 +100,92 @@ namespace Pathfinding
             }
         }
 
-        public void StoreCrossChunkNeighbours()
+        public void FindCrossChunkNeighbours()
         {
             var max = bounds.max;
             foreach (var node in nodes.Values)
             {
-                if (xNeighbour != null)
+                if (owner.xNeighbour != null)
                 {
-                    if ((max.x - node.pos.x) < 0.01f)
+                    if ((max.x - node.pos.x) < 0.5f)
                     {
                         //dictionary lookup isn't reliable enough
-                        if (!xNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        if (!owner.xNeighbour.graph.nodes.TryGetValue(node.pos, out var neighbour))
                         {
-                            neighbour = xNeighbour.GetClosestNode(node.pos);
+                            neighbour = owner.xNeighbour.graph.GetClosestNode(node.pos);
                         }
-                        Node.MergeNeighbours(node, neighbour);
+                        foreach (var identifier in neighbour.neighbourIdentifiers)
+                        {
+                            node.AddNeighbourIdentifier(identifier.key, ChunkNeighbourType.X);
+                        }
                     }
                 }
 
-                if (yNeighbour != null)
+                if (owner.yNeighbour != null)
                 {
-                    if ((max.y - node.pos.y) < 0.01f)
+                    if ((max.y - node.pos.y) < 0.5f)
                     {
-                        if (!yNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        if (!owner.yNeighbour.graph.nodes.TryGetValue(node.pos, out var neighbour))
                         {
-                            neighbour = yNeighbour.GetClosestNode(node.pos);
+                            neighbour = owner.yNeighbour.graph.GetClosestNode(node.pos);
                         }
-                        Node.MergeNeighbours(node, yNeighbour.GetClosestNode(node.pos));
+                        foreach (var identifier in neighbour.neighbourIdentifiers)
+                        {
+                            node.AddNeighbourIdentifier(identifier.key, ChunkNeighbourType.Y);
+                        }
                     }
                 }
 
-                if (zNeighbour != null)
+                if (owner.zNeighbour != null)
                 {
-                    if ((max.z - node.pos.z) < 0.01f)
+                    if ((max.z - node.pos.z) < 0.5f)
                     {
-                        if (!zNeighbour.nodes.TryGetValue(node.pos, out var neighbour))
+                        if (!owner.zNeighbour.graph.nodes.TryGetValue(node.pos, out var neighbour))
                         {
-                            neighbour = zNeighbour.GetClosestNode(node.pos);
+                            neighbour = owner.zNeighbour.graph.GetClosestNode(node.pos);
                         }
-                        Node.MergeNeighbours(node, neighbour);
+                        foreach (var identifier in neighbour.neighbourIdentifiers)
+                        {
+                            node.AddNeighbourIdentifier(identifier.key, ChunkNeighbourType.Z);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void AssignNeighbours()
+        {
+            foreach (var node in nodes.Values)
+            {
+                foreach (var identifier in node.neighbourIdentifiers)
+                {
+                    switch (identifier.chunkNeighbourType)
+                    {
+                        case ChunkNeighbourType.Same:
+                            node.AddNeighbour(nodes[identifier.key]);
+                            break;
+                        case ChunkNeighbourType.X:
+                            var xNeighbour = owner.xNeighbour.graph.nodes[identifier.key];
+                            node.AddNeighbour(xNeighbour);
+                            xNeighbour.AddNeighbour(node);
+                            break;
+                        case ChunkNeighbourType.Y:
+                            var yNeighbour = owner.yNeighbour.graph.nodes[identifier.key];
+                            node.AddNeighbour(yNeighbour);
+                            yNeighbour.AddNeighbour(node);
+                            break;
+                        case ChunkNeighbourType.Z:
+                            var zNeighbour = owner.zNeighbour.graph.nodes[identifier.key];
+                            node.AddNeighbour(zNeighbour);
+                            zNeighbour.AddNeighbour(node);
+                            break;
                     }
                 }
             }
         }
     }
 
-    [System.Serializable]
+    [Serializable]
     public struct NavmeshHit
     {
         public Vector3 point;

@@ -52,6 +52,7 @@ namespace Pathfinding.Algorithms
             Node current = null;
             start.costHeuristicBalance = settings.greediness;
             start.cost = 0;
+            start.parent = start;
             start.heuristic = settings.Heuristic(start.pos, goal.pos);
             openNodes.Add(start);
             while (openNodes.Count != 0 && !closedNodes.Contains(goal))
@@ -85,7 +86,7 @@ namespace Pathfinding.Algorithms
 
             if (!closedNodes.Contains(goal))
             {
-                Debug.Log("no goal, " + numIterations + " iterations");
+                Debug.Log("no goal, " + numIterations + " iterations, closed: " + closedNodes.Count + ", opened: " + openNodes.Count);
                 return path;
             }
 
@@ -102,10 +103,12 @@ namespace Pathfinding.Algorithms
             if (settings.benchmark)
             {
                 sw.Stop();
-                Debug.Log("A*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", visited: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
+                Debug.Log("A*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", opened: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
             }
 
             return path;
         }
+
+
     }
 }

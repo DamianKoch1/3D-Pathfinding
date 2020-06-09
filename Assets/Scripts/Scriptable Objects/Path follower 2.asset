@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: Path follower 2
   m_EditorClassIdentifier: 
-  heuristic: 0
-  costIncrease: 1
+  algorithm: 0
+  heuristic: 1
+  costIncrease: 2
   benchmark: 0
   greediness: 0.764
