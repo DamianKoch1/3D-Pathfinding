@@ -1,8 +1,17 @@
-﻿using Pathfinding.Serialization;
+﻿using MessagePack;
+using MessagePack.Resolvers;
+using MessagePack.Unity;
+using MessagePack.Unity.Extension;
+using Pathfinding.Serialization;
 using SimplexNoise;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Pathfinding
 {
@@ -11,9 +20,9 @@ namespace Pathfinding
     /// </summary>
     public class NodesGenerator : MonoBehaviour
     {
-        public const string NAVMESH_LAYER = "NavMesh";
+        public static int NAVMESH_LAYER;
 
-        public const string OBSTACLE_LAYER = "NavMeshObstacle";
+        public static int OBSTACLE_LAYER;
 
         public GridGenerationSettings gridSettings;
 
@@ -33,16 +42,7 @@ namespace Pathfinding
         public FlattenedChunk3DArray chunks;
 
         [SerializeField]
-        private bool autoGenerate;
-
-        [SerializeField]
         public bool visualizePathfinding;
-
-
-
-        //Can't destroy chunks from OnValidate in edit mode
-        [HideInInspector]
-        public bool hasOutOfRangeChunks;
 
         private SortedSet<Node> openNodes;
         private HashSet<Node> closedNodes;
@@ -50,55 +50,40 @@ namespace Pathfinding
         //used for profiling
         private void Start()
         {
-            //GenerateChunks();
-            //GenerateGrid();
-            //MarchCubes();
-            //GenerateGraph();
             AssignNeighbours();
             FindGridPath(start.position, goal.position, pathfindingSettings);
             FindGraphPath(start.position, goal.position, pathfindingSettings);
         }
 
-        //better turn this off with too much chunks / low grid step
-        private void OnValidate()
+        public async void GenerateNodes()
         {
-            if (!autoGenerate) return;
-            gridSettings.onValidate = OnValidate;
-            GenerateChunks();
-            GenerateGrid();
-            GenerateGraph();
-            MarchCubes();
-        }
+            NAVMESH_LAYER = LayerMask.GetMask("NavMesh");
+            OBSTACLE_LAYER = LayerMask.GetMask("NavMeshObstacle");
 
-        public void GenerateAll()
-        {
-            GenerateChunks();
-            if (hasOutOfRangeChunks)
-            {
-                ClearOutdatedChunks();
-            }
-            GenerateGrid();
+            await GenerateGrid(0);
             switch (pathfindingType)
             {
                 case PathfindingType.gridOnly:
                     break;
                 case PathfindingType.navmeshOnly:
-                    MarchCubes();
+                    await MarchCubes(10);
                     GenerateGraph();
-                    ClearGrid();
+                    //ClearGrid();
                     break;
                 case PathfindingType.both:
-                    MarchCubes();
+                    await MarchCubes(10);
                     GenerateGraph();
                     break;
             }
+            print("Finished generating");
         }
 
-        public void ClearGrid()
+        public async Task ClearGrid(int delay = 0)
         {
             foreach (var chunk in chunks.items)
             {
                 chunk.grid = null;
+                await Task.Delay(delay);
             }
         }
 
@@ -107,7 +92,11 @@ namespace Pathfinding
         /// </summary>
         public void GenerateChunks()
         {
-            chunks = new FlattenedChunk3DArray(FlattenedArrayUtils.New<Chunk>(chunkCount.x, chunkCount.y, chunkCount.z));
+            if (chunks == null || chunks.Length != chunkCount.x * chunkCount.y * chunkCount.z)
+            {
+                chunks = new FlattenedChunk3DArray(FlattenedArrayUtils.New<Chunk>(chunkCount.x, chunkCount.y, chunkCount.z));
+            }
+            var outdatedChunks = new List<Chunk>();
             foreach (var chunk in GetComponentsInChildren<Chunk>())
             {
                 bool outOfXRange = chunk.x >= chunkCount.x;
@@ -116,7 +105,7 @@ namespace Pathfinding
 
                 if (outOfXRange || outOfYRange || outOfZRange)
                 {
-                    hasOutOfRangeChunks = true;
+                    outdatedChunks.Add(chunk);
                     continue;
                 }
                 chunks[chunk.x, chunk.y, chunk.z] = chunk;
@@ -151,6 +140,11 @@ namespace Pathfinding
                     }
                 }
             }
+            while (outdatedChunks.Count > 0)
+            {
+                DestroyImmediate(outdatedChunks[0]);
+                outdatedChunks.RemoveAt(0);
+            }
         }
 
         /// <summary>
@@ -158,7 +152,6 @@ namespace Pathfinding
         /// </summary>
         public void ClearOutdatedChunks()
         {
-            hasOutOfRangeChunks = false;
             foreach (var chunk in GetComponentsInChildren<Chunk>())
             {
                 bool outOfXRange = chunk.x >= chunkCount.x;
@@ -175,9 +168,10 @@ namespace Pathfinding
         /// <summary>
         /// Lets all chunk generate their grid, then saves neighbours from adjacent chunks
         /// </summary>
-        public void GenerateGrid()
+        public async Task GenerateGrid(int delay = 0)
         {
             if (chunks == null) return;
+
             if (gridSettings.mode == GenerationMode.Noise)
             {
                 if (gridSettings.useRandomSeed)
@@ -189,26 +183,30 @@ namespace Pathfinding
             foreach (var chunk in chunks.items)
             {
                 chunk.GenerateGrid();
+                await Task.Delay(delay);
             }
             foreach (var chunk in chunks.items)
             {
                 chunk.grid.FindCrossChunkNeighbours();
+                await Task.Delay(delay);
             }
         }
 
         /// <summary>
         /// Lets all chunks generate their graph, then saves neighbours from adjacent graphs, only call this after navmesh has been built
         /// </summary>
-        public void GenerateGraph()
+        public async Task GenerateGraph(int delay = 0)
         {
             if (chunks == null) return;
             foreach (var chunk in chunks.items)
             {
                 chunk.GenerateGraph();
+                await Task.Delay(delay);
             }
             foreach (var chunk in chunks.items)
             {
                 chunk.graph.FindCrossChunkNeighbours();
+                await Task.Delay(delay);
             }
         }
 
@@ -218,6 +216,7 @@ namespace Pathfinding
         public void Clear()
         {
             if (chunks == null) return;
+            StopAllCoroutines();
             GetComponent<LineRenderer>().positionCount = 0;
             foreach (var chunk in chunks.items)
             {
@@ -278,7 +277,7 @@ namespace Pathfinding
             int maxRaycasts = 100;
 
             //RaycastAll only giving first hit since next rays start inside previous face
-            while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), LayerMask.GetMask(NAVMESH_LAYER)))
+            while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), NAVMESH_LAYER))
             {
                 maxRaycasts--;
                 hits.Add(new NavmeshHit(hit));
@@ -332,6 +331,8 @@ namespace Pathfinding
         /// </summary>
         public void AssignNeighbours()
         {
+            NAVMESH_LAYER = LayerMask.GetMask("NavMesh");
+            OBSTACLE_LAYER = LayerMask.GetMask("NavMeshObstacle");
             foreach (var chunk in chunks.items)
             {
                 chunk.AssignNeighbours();
@@ -363,7 +364,7 @@ namespace Pathfinding
             var hits = GetNavMeshIntersections(start, goal);
             if (hits.Count > 1)
             {
-                var tempNodes = new TempNodeDictionary();   
+                var tempNodes = new TempNodeDictionary();
                 for (int i = 0; i < hits.Count - 1; i += 2)
                 {
                     //add temp nodes at navmesh hits
@@ -442,16 +443,17 @@ namespace Pathfinding
             }
         }
 
-        
+
         /// <summary>
         /// Lets all chunks march the cubes of their grids
         /// </summary>
-        public void MarchCubes()
+        public async Task MarchCubes(int delay = 0)
         {
             if (chunks == null) return;
             foreach (var chunk in chunks.items)
             {
                 chunk.MarchCubes();
+                await Task.Delay(delay);
             }
         }
 
@@ -467,23 +469,22 @@ namespace Pathfinding
             VisualizePathfinding();
         }
 
-        public void SerializeInto(GeneratorData data)
+        public void Serialize()
         {
-            data.chunkData = new ChunkData[chunks.Length];
-            for (int i = 0; i < data.chunkData.Length; i++)
-            {
-                data.chunkData[i] = chunks[i].Serialize();
-            }
+            var message = new GeneratorData(this);
+            var bytes = MessagePackSerializer.Serialize(message);
+            File.WriteAllBytes(Application.persistentDataPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", bytes);
         }
 
-        public void DeserializeFrom(GeneratorData data)
+        public void Deserialize()
         {
-            for (int i = 0; i < data.chunkData.Length; i++)
+            var bytes = File.ReadAllBytes(Application.persistentDataPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes");
+            var message = MessagePackSerializer.Deserialize<GeneratorData>(bytes);
+            for (int i = 0; i < message.chunkData.Length; i++)
             {
-                chunks[i].Deserialize(data.chunkData[i]);
+                chunks[i].Deserialize(message.chunkData[i]);
             }
-            MarchCubes();
-            AssignNeighbours();
+            MarchCubes(5);
         }
     }
 

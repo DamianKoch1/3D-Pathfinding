@@ -1,24 +1,47 @@
-﻿using System;
+﻿using MessagePack;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding.Serialization
 {
-    [CreateAssetMenu, PreferBinarySerialization]
-    public class GeneratorData : ScriptableObject
+    [MessagePackObject]
+    public class GeneratorData
     {
+        [Key(0)]
         public ChunkData[] chunkData;
+
+        public GeneratorData(ChunkData[] _chunkData)
+        {
+            chunkData = _chunkData;
+        }
+
+        public GeneratorData(NodesGenerator source)
+        {
+            chunkData = new ChunkData[source.chunks.Length];
+            for (int i = 0; i < chunkData.Length; i++)
+            {
+                chunkData[i] = source.chunks[i].Serialize();
+            }
+        }
     }
 
-
-    [Serializable]
+    [MessagePackObject]
     public class ChunkData
     {
-        public FlattenedNode3DArray gridNodes;
+        [Key(0)]
+        public Node[,,] gridNodes;
 
-        public List<Vector3> graphKeys;
-        public List<Node> graphNodes;
+        [Key(1)]
+        public Dictionary<Vector3, Node> graphNodes;
+
+        public ChunkData(Node[,,] _gridNodes, Dictionary<Vector3, Node> _graphNodes)
+        {
+            gridNodes = _gridNodes;
+            graphNodes = _graphNodes;
+        }
 
         public ChunkData(Chunk source)
         {
@@ -27,11 +50,9 @@ namespace Pathfinding.Serialization
                 gridNodes = source.grid.nodes;
             }
 
-            graphKeys = new List<Vector3>();
-            graphNodes = new List<Node>();
             if (source.graph != null)
             {
-                source.graph.nodes.Serialize(ref graphKeys, ref graphNodes);
+                graphNodes = source.graph.nodes;
             }
         }
     }

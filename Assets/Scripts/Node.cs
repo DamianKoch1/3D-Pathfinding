@@ -1,4 +1,5 @@
-﻿using Pathfinding.Serialization;
+﻿using MessagePack;
+using Pathfinding.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,31 +10,34 @@ namespace Pathfinding
     /// <summary>
     /// Node used in grids / graphs / pathfinding, knows its world position, (grid index), neighbours, cost, heuristic, and previous node of path
     /// </summary>
-    [Serializable]
+    [MessagePackObject]
     public class Node : IComparable<Node>, IEquatable<Node>
     {
+        [Key(0)]
         public Vector3 pos;
 
-        [NonSerialized]
+        [IgnoreMember]
         public Node parent;
 
-        [NonSerialized]
+        [IgnoreMember]
         public float heuristic = -1;
 
-        [NonSerialized]
+        [IgnoreMember]
         public float cost = -1;
 
+        [Key(1)]
         public float isoValue;
 
-        [NonSerialized]
+        [IgnoreMember]
         public List<Node> neighbours;
 
-        [SerializeField]
+        [Key(2)]
         public List<NodeIdentifier> neighbourIdentifiers;
 
-        [NonSerialized]
+        [IgnoreMember]
         public float costHeuristicBalance = 0.5f;
 
+        [IgnoreMember]
         public float F
         {
             get
@@ -44,6 +48,14 @@ namespace Pathfinding
                 }
                 return -1;
             }
+        }
+
+        public Node(Vector3 _pos, float _isoValue, List<NodeIdentifier> _neighbourIdentifiers)
+        {
+            neighbours = new List<Node>(26);
+            neighbourIdentifiers = _neighbourIdentifiers;
+            pos = _pos;
+            isoValue = _isoValue;
         }
 
         public Node(Vector3 _pos, float _isoValue)
@@ -106,34 +118,19 @@ namespace Pathfinding
         }
     }
 
-
-    [Serializable]
-    public class SerializableNodeDictionary : SerializableDictionary<Vector3, Node>
-    { }
-
-
-    [Serializable]
-    public class FlattenedNode3DArray : Flattened3DArray<Node>
+    [MessagePackObject]
+    public struct NodeIdentifier : IEquatable<NodeIdentifier>
     {
-        public FlattenedNode3DArray(Flattened3DArray<Node> other) : base(other)
-        {
-        }
-    }
-
-
-    [Serializable]
-    public class NodeIdentifier : IEquatable<NodeIdentifier>
-    {
-        public ChunkNeighbourType chunkNeighbourType;
+        [Key(0)]
         public Vector3 key;
 
-        public NodeIdentifier()
-        { }
+        [Key(1)]
+        public ChunkNeighbourType chunkNeighbourType;
 
-        public NodeIdentifier(Vector3 _key, ChunkNeighbourType _type = ChunkNeighbourType.Same)
+        public NodeIdentifier(Vector3 _key, ChunkNeighbourType type)
         {
             key = _key;
-            chunkNeighbourType = _type;
+            chunkNeighbourType = type;
         }
 
         //this is enough unless chunks have very few nodes which shouldn't happen

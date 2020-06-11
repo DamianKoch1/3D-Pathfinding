@@ -71,7 +71,7 @@ namespace Pathfinding
                 case GenerationMode.Overlap:
                     GetIsoValue = (Vector3 pos) =>
                     {
-                        var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, LayerMask.GetMask(NodesGenerator.OBSTACLE_LAYER));
+                        var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, NodesGenerator.OBSTACLE_LAYER);
                         if (overlaps.Length == 0) return 1;
                         var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
                         return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
@@ -159,7 +159,7 @@ namespace Pathfinding
             var combine = new List<CombineInstance>();
             var filter = GetComponent<MeshFilter>();
             var collider = GetComponent<MeshCollider>();
-            foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.chunkSize / 2, Quaternion.identity, ~LayerMask.GetMask(NodesGenerator.NAVMESH_LAYER)))
+            foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.chunkSize / 2, Quaternion.identity, ~NodesGenerator.NAVMESH_LAYER))
             {
                 var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
                 if (!mesh) continue;
@@ -215,8 +215,14 @@ namespace Pathfinding
 
         public void Deserialize(ChunkData data)
         {
-            grid = new Grid(this, data.gridNodes, gridSettings.step);
-            graph = new MeshVertexGraph(this, data.graphKeys, data.graphNodes);
+            if (data.gridNodes?.Length > 0)
+            {
+                grid = new Grid(this, data.gridNodes, gridSettings.step);
+            }
+            if (data.graphNodes?.Count > 0)
+            {
+                graph = new MeshVertexGraph(this, data.graphNodes);
+            }
         }
     }
 

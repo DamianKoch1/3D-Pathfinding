@@ -151,10 +151,10 @@ namespace Pathfinding.Algorithms
         private static bool LineOfSight(Node node1, Node node2)
         {
             if (node1 == null || node2 == null) return false;
-            if (!Physics.Linecast(node1.pos, node2.pos, LayerMask.GetMask(NodesGenerator.NAVMESH_LAYER)))
+            if (!Physics.Linecast(node1.pos, node2.pos, NodesGenerator.NAVMESH_LAYER))
             {
                 //doesnt work on non convex navmesh colliders, doesn't use navmesh offset...
-                return Physics.OverlapSphere((node1.pos + node2.pos) / 2, 2, LayerMask.GetMask(NodesGenerator.OBSTACLE_LAYER)).Length == 0;
+                return Physics.OverlapSphere((node1.pos + node2.pos) / 2, 2, NodesGenerator.OBSTACLE_LAYER).Length == 0;
             }
             return false;
         }

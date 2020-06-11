@@ -41,12 +41,12 @@ namespace Pathfinding
             }
         }
 
-        public IEnumerable<Node> Nodes => nodes.items.Cast<Node>();
+        public IEnumerable<Node> Nodes => nodes.Cast<Node>();
 
         //public GridNode[,,] nodes;
 
         //no noticeable generation performance diff, but serializable
-        public FlattenedNode3DArray nodes;
+        public Node[,,] nodes;
 
         public Vector3 step;
 
@@ -56,14 +56,18 @@ namespace Pathfinding
 
         public Chunk owner;
 
-        public Grid(Chunk _owner, FlattenedNode3DArray _nodes, Vector3 _step)
+        public Grid(Chunk _owner, Node[,,] _nodes, Vector3 _step)
         {
             owner = _owner;
             nodes = _nodes;
 
-            xSize = nodes.dimensions[0];
-            ySize = nodes.dimensions[1];
-            zSize = nodes.dimensions[2];
+            //xSize = nodes.dimensions[0];
+            //ySize = nodes.dimensions[1];
+            //zSize = nodes.dimensions[2];
+
+            xSize = nodes.GetLength(0);
+            ySize = nodes.GetLength(1);
+            zSize = nodes.GetLength(2);
 
             step = _step;
         }
@@ -88,8 +92,8 @@ namespace Pathfinding
             ySize = (int)(extents.y / step.y);
             zSize = (int)(extents.z / step.z);
 
-            //nodes = new GridNode[xSize, ySize, zSize];
-            nodes = new FlattenedNode3DArray(FlattenedArrayUtils.New<Node>(xSize, ySize, zSize));
+            nodes = new Node[xSize, ySize, zSize];
+            //nodes = new FlattenedNode3DArray(FlattenedArrayUtils.New<Node>(xSize, ySize, zSize));
 
             Vector3 min = owner.bounds.min;
             Vector3 pos = min;
@@ -123,7 +127,7 @@ namespace Pathfinding
 
         public void AssignNeighbours()
         {
-            foreach (var node in nodes.items)
+            foreach (var node in nodes)
             {
                 foreach (var identifier in node.neighbourIdentifiers)
                 {
@@ -154,7 +158,7 @@ namespace Pathfinding
 
         public void DrawGizmos(Color color, float isoLevel)
         {
-            foreach (var node in nodes.items)
+            foreach (var node in nodes)
             {
                 node.DrawGizmos(color, isoLevel);
             }
@@ -289,7 +293,7 @@ namespace Pathfinding
         /// </summary>
         public void ResetNodes()
         {
-            foreach (var node in nodes.items)
+            foreach (var node in nodes)
             {
                 if (node.F != -1)
                 {

@@ -1,6 +1,7 @@
 ﻿using Pathfinding.Serialization;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,9 +27,9 @@ namespace Pathfinding.Editors
 
             if (generator.chunks == null) GUI.enabled = false;
 
-            if (GUILayout.Button("Generate all"))
+            if (GUILayout.Button("Generate Nodes"))
             {
-                generator.GenerateAll();
+                generator.GenerateNodes();
             }
 
             if (GUILayout.Button("Assign Neighbours"))
@@ -38,7 +39,7 @@ namespace Pathfinding.Editors
 
             if (GUILayout.Button("March Cubes"))
             {
-                generator.MarchCubes();
+                generator.MarchCubes(10);
             }
 
             if (!generator.start || !generator.goal) GUI.enabled = false;
@@ -72,28 +73,36 @@ namespace Pathfinding.Editors
 
                 if (GUILayout.Button("Save"))
                 {
-                    var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
-                    if (!data)
-                    {
-                        data = CreateInstance<GeneratorData>();
-                        AssetDatabase.CreateAsset(data, "Assets/Resources/Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name + ".asset");
-                    }
-                    generator.SerializeInto(data);
-                    EditorUtility.SetDirty(data);
-                    AssetDatabase.SaveAssets();
-                    Resources.UnloadAsset(data);
+                    //var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
+                    //if (!data)
+                    //{
+                    //    data = CreateInstance<GeneratorData>();
+                    //    AssetDatabase.CreateAsset(data, "Assets/Resources/Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name + ".asset");
+                    //}
+                    //generator.SerializeInto(data);
+                    //EditorUtility.SetDirty(data);
+                    //AssetDatabase.SaveAssets();
+                    //Resources.UnloadAsset(data);
+
+                    //generator.SerializeBinary();
+
+                    generator.Serialize();
                 }
 
                 GUI.enabled = true;
 
                 if (GUILayout.Button("Load"))
                 {
-                    var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
-                    if (data)
-                    {
-                        generator.DeserializeFrom(data);
-                        Resources.UnloadAsset(data);
-                    }
+                    //var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
+                    //if (data)
+                    //{
+                    //    generator.DeserializeFrom(data);
+                    //    Resources.UnloadAsset(data);
+                    //}
+
+                    //generator.DeserializeBinary();
+
+                    generator.Deserialize();
                 }
 
                 GUI.enabled = true;

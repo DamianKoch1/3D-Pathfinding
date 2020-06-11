@@ -1,7 +1,5 @@
-﻿using Pathfinding.Serialization;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding
@@ -11,17 +9,16 @@ namespace Pathfinding
     /// </summary>
     public class MeshVertexGraph : INodeGraph
     {
-        public SerializableNodeDictionary nodes;
+        public Dictionary<Vector3, Node> nodes;
 
         public IEnumerable<Node> Nodes => nodes.Values;
 
         public Chunk owner;
 
-        public MeshVertexGraph(Chunk _owner, List<Vector3> keys, List<Node> values)
+        public MeshVertexGraph(Chunk _owner, Dictionary<Vector3, Node> _nodes)
         {
             owner = _owner;
-            nodes = new SerializableNodeDictionary();
-            nodes.Deserialize(keys, values);
+            nodes = _nodes;
         }
 
         /// <summary>
@@ -33,7 +30,7 @@ namespace Pathfinding
         {
             owner = _owner;
 
-            nodes = new SerializableNodeDictionary();
+            nodes = new Dictionary<Vector3, Node>();
 
 
             var mesh = filter.sharedMesh;
@@ -82,7 +79,7 @@ namespace Pathfinding
             foreach (var node in nodes.Values)
             {
                 float newSqDistance = (node.pos - position).sqrMagnitude;
-                if ((node.pos - position).sqrMagnitude < lowestSqDistance)
+                if (newSqDistance < lowestSqDistance)
                 {
                     retVal = node;
                     lowestSqDistance = newSqDistance;

@@ -12,8 +12,5 @@ namespace Pathfinding
         public float minScale = 0.1f;
 
         public float maxScale = 2f;
-
-        public AnimationCurve scaleDistribution;
-
     }
 }

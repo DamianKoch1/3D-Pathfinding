@@ -35,12 +35,6 @@ namespace Pathfinding
 
         public bool useRandomSeed;
 
-        public Action onValidate;
-
-        public void OnValidate()
-        {
-            onValidate?.Invoke();
-        }
     }
 
     public enum GenerationMode
