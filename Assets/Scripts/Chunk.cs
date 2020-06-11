@@ -35,9 +35,9 @@ namespace Pathfinding
 
         private bool visualizePathfinding;
 
-        private GridGenerationSettings gridSettings;
+        public GridGenerationSettings gridSettings;
 
-        private Bounds bounds;
+        public Bounds bounds;
 
         /// <summary>
         /// Sets local position / name according to index, calculates bounds and node array dimensions
@@ -82,7 +82,7 @@ namespace Pathfinding
                     break;
             }
 
-            grid = new Grid(transform.position, gridSettings, GetIsoValue, this);
+            grid = new Grid(gridSettings, GetIsoValue, this);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace Pathfinding
         /// </summary>
         public void GenerateGraph()
         {
-            graph = new MeshVertexGraph(GetComponent<MeshFilter>(), bounds, this);
+            graph = new MeshVertexGraph(GetComponent<MeshFilter>(), this);
         }
 
         public void AssignNeighbours()
@@ -206,6 +206,17 @@ namespace Pathfinding
             var mesh = MarchingCubes.March(grid, gridSettings.isoLevel);
             filter.sharedMesh = mesh;
             collider.sharedMesh = mesh;
+        }
+
+        public ChunkData Serialize()
+        {
+            return new ChunkData(this);
+        }
+
+        public void Deserialize(ChunkData data)
+        {
+            grid = new Grid(this, data.gridNodes, gridSettings.step);
+            graph = new MeshVertexGraph(this, data.graphKeys, data.graphNodes);
         }
     }
 

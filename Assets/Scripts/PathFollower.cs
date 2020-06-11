@@ -14,7 +14,7 @@ namespace Pathfinding
         [SerializeField]
         private Transform target;
 
-        private List<Vector3> path;
+        private Vector3[] path;
 
         [SerializeField]
         private PathfindingMode mode;
@@ -44,10 +44,10 @@ namespace Pathfinding
             switch (mode)
             {
                 case PathfindingMode.grid:
-                    path = generator.FindGridPath(transform.position, target.position, settings);
+                    path = generator.FindGridPath(transform.position, target.position, settings).ToArray();
                     break;
                 case PathfindingMode.navmesh:
-                    path = generator.FindGraphPath(transform.position, target.position, settings);
+                    path = generator.FindGraphPath(transform.position, target.position, settings).ToArray();
                     break;
             }
         }
@@ -55,7 +55,7 @@ namespace Pathfinding
         void Update()
         {
             if (path == null) return;
-            if (idx >= path.Count)
+            if (idx >= path.Length)
             {
                 path = null;
                 return;
@@ -73,7 +73,7 @@ namespace Pathfinding
         private void OnDrawGizmos()
         {
             if (path == null) return;
-            for (int i = 0; i < path.Count - 2; i++)
+            for (int i = 0; i < path.Length - 2; i++)
             {
                 Gizmos.DrawLine(path[i], path[i + 1]);
             }

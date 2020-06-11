@@ -15,22 +15,17 @@ namespace Pathfinding
 
         public const string OBSTACLE_LAYER = "NavMeshObstacle";
 
-
         public GridGenerationSettings gridSettings;
 
-        public ObstacleGenerationSettings obstacleSettings;
-
         public PathfindingSettings pathfindingSettings;
+
+        public PathfindingType pathfindingType;
 
         public Transform start;
 
         public Transform goal;
 
-        [SerializeField]
-        private Transform obstacles;
-
-        [SerializeField]
-        private Vector3Int chunkCount;
+        public Vector3Int chunkCount;
 
         [SerializeField]
         private Chunk chunkPrefab;
@@ -43,16 +38,11 @@ namespace Pathfinding
         [SerializeField]
         public bool visualizePathfinding;
 
+
+
         //Can't destroy chunks from OnValidate in edit mode
         [HideInInspector]
         public bool hasOutOfRangeChunks;
-
-
-        [HideInInspector]
-        public bool hasGrid;
-
-        [HideInInspector]
-        public bool hasGraph;
 
         private SortedSet<Node> openNodes;
         private HashSet<Node> closedNodes;
@@ -78,6 +68,38 @@ namespace Pathfinding
             GenerateGrid();
             GenerateGraph();
             MarchCubes();
+        }
+
+        public void GenerateAll()
+        {
+            GenerateChunks();
+            if (hasOutOfRangeChunks)
+            {
+                ClearOutdatedChunks();
+            }
+            GenerateGrid();
+            switch (pathfindingType)
+            {
+                case PathfindingType.gridOnly:
+                    break;
+                case PathfindingType.navmeshOnly:
+                    MarchCubes();
+                    GenerateGraph();
+                    ClearGrid();
+                    break;
+                case PathfindingType.both:
+                    MarchCubes();
+                    GenerateGraph();
+                    break;
+            }
+        }
+
+        public void ClearGrid()
+        {
+            foreach (var chunk in chunks.items)
+            {
+                chunk.grid = null;
+            }
         }
 
         /// <summary>
@@ -172,7 +194,6 @@ namespace Pathfinding
             {
                 chunk.grid.FindCrossChunkNeighbours();
             }
-            hasGrid = true;
         }
 
         /// <summary>
@@ -189,7 +210,6 @@ namespace Pathfinding
             {
                 chunk.graph.FindCrossChunkNeighbours();
             }
-            hasGraph = true;
         }
 
         /// <summary>
@@ -203,8 +223,6 @@ namespace Pathfinding
             {
                 chunk.Clear();
             }
-            hasGrid = false;
-            hasGraph = false;
             openNodes = null;
             closedNodes = null;
         }
@@ -285,14 +303,10 @@ namespace Pathfinding
         /// <param name="goal"></param>
         /// <param name="settings"></param>
         /// <returns></returns>
-        public List<Vector3> FindGridPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
+        public Stack<Vector3> FindGridPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
         {
-            var pathPoints = new List<Vector3>();
+            var pathPoints = new Stack<Vector3>();
             if (chunks == null) return pathPoints;
-            if (!hasGrid)
-            {
-                GenerateGrid();
-            }
 
             var lr = GetComponent<LineRenderer>();
 
@@ -304,7 +318,7 @@ namespace Pathfinding
             tempNodes.AddNode(gridStart, start);
             tempNodes.AddNode(gridGoal, goal);
 
-            pathPoints.AddRange(settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes));
+            pathPoints = settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes);
 
             tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
 
@@ -331,36 +345,34 @@ namespace Pathfinding
         /// <param name="goal"></param>
         /// <param name="settings"></param>
         /// <returns></returns>
-        public List<Vector3> FindGraphPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
+        public Stack<Vector3> FindGraphPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
         {
-            var pathPoints = new List<Vector3>();
+            var pathPoints = new Stack<Vector3>();
             if (chunks == null) return pathPoints;
-            if (!hasGraph)
-            {
-                GenerateGraph();
-            }
 
             var lr = GetComponent<LineRenderer>();
 
-            var tempNodes = new TempNodeDictionary();
 
 
             openNodes = new SortedSet<Node>();
             closedNodes = new HashSet<Node>();
 
 
-            var nodesClosestToHit = new Dictionary<int, Node>();
+            var nodesClosestToHit = new List<Node>();
 
             var hits = GetNavMeshIntersections(start, goal);
             if (hits.Count > 1)
             {
+                var tempNodes = new TempNodeDictionary();   
                 for (int i = 0; i < hits.Count - 1; i += 2)
                 {
-                    nodesClosestToHit.Add(i, GetClosestGraphNode(hits[i].point));
-                    nodesClosestToHit.Add(i + 1, GetClosestGraphNode(hits[i + 1].point));
+                    //add temp nodes at navmesh hits
+                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i].point));
+                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i + 1].point));
                     if (i > 0)
                     {
                         tempNodes.AddNode(nodesClosestToHit[i], hits[i].point);
+
                         //link navmesh exiting hits with entering hits
                         if (i % 2 == 0)
                         {
@@ -373,22 +385,18 @@ namespace Pathfinding
                         tempNodes.AddNode(nodesClosestToHit[i + 1], hits[i + 1].point);
                     }
 
-
-                    if (i + 2 < hits.Count)
-                    {
-                        pathPoints.Add(hits[i + 2].point);
-                    }
                 }
                 tempNodes.AddNode(nodesClosestToHit[0], start);
                 tempNodes.AddNode(nodesClosestToHit[hits.Count - 1], goal);
+                pathPoints = settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes);
+                tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
             }
-            else return pathPoints;
-            pathPoints.AddRange(settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes));
+            else
+            {
+                pathPoints.Push(goal);
+                pathPoints.Push(start);
+            }
 
-            //??
-            pathPoints.RemoveAt(0);
-
-            tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
             lr.positionCount = pathPoints.Count;
             lr.SetPositions(pathPoints.ToArray());
             return pathPoints;
@@ -407,6 +415,7 @@ namespace Pathfinding
             {
                 highestF = openNodes.Last().F;
             }
+            else if (closedNodes?.Count == 0) return;
             else
             {
                 highestF = closedNodes.OrderBy(n => n.F).Last().F;
@@ -433,58 +442,7 @@ namespace Pathfinding
             }
         }
 
-        /// <summary>
-        /// Randomizes obstacle scale / positions within chunk boundaries, instantiates or removes obstacles if necessary
-        /// </summary>
-        public void RandomizeObstacles()
-        {
-            if (!obstacles) return;
-            if (!obstacleSettings || !obstacleSettings.generate)
-            {
-                while (obstacles.childCount > 0)
-                {
-                    DestroyImmediate(obstacles.GetChild(0).gameObject);
-                }
-                return;
-            }
-
-            if (!obstacleSettings.prefab) return;
-
-            var childCount = obstacles.childCount;
-            if (childCount < obstacleSettings.count)
-            {
-                for (int i = childCount; i < obstacleSettings.count; i++)
-                {
-                    Instantiate(obstacleSettings.prefab, obstacles);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < childCount - obstacleSettings.count; i++)
-                {
-                    DestroyImmediate(obstacles.GetChild(0).gameObject);
-                }
-            }
-
-            foreach (Transform child in obstacles)
-            {
-                child.position = obstacles.position + new Vector3
-                    (
-                        Random.Range(0, gridSettings.chunkSize.x * chunkCount.x),
-                        Random.Range(0, gridSettings.chunkSize.y * chunkCount.y),
-                        Random.Range(0, gridSettings.chunkSize.z * chunkCount.z)
-                    );
-                child.rotation = Random.rotation;
-                child.localScale = new Vector3
-                (
-                    Random.Range(obstacleSettings.minScale, obstacleSettings.maxScale),
-                    Random.Range(obstacleSettings.minScale, obstacleSettings.maxScale),
-                    Random.Range(obstacleSettings.minScale, obstacleSettings.maxScale)
-                );
-            }
-            Physics.SyncTransforms();
-        }
-
+        
         /// <summary>
         /// Lets all chunks march the cubes of their grids
         /// </summary>
@@ -508,5 +466,31 @@ namespace Pathfinding
         {
             VisualizePathfinding();
         }
+
+        public void SerializeInto(GeneratorData data)
+        {
+            data.chunkData = new ChunkData[chunks.Length];
+            for (int i = 0; i < data.chunkData.Length; i++)
+            {
+                data.chunkData[i] = chunks[i].Serialize();
+            }
+        }
+
+        public void DeserializeFrom(GeneratorData data)
+        {
+            for (int i = 0; i < data.chunkData.Length; i++)
+            {
+                chunks[i].Deserialize(data.chunkData[i]);
+            }
+            MarchCubes();
+            AssignNeighbours();
+        }
+    }
+
+    public enum PathfindingType
+    {
+        gridOnly,
+        navmeshOnly,
+        both
     }
 }

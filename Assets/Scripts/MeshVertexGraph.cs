@@ -9,7 +9,6 @@ namespace Pathfinding
     /// <summary>
     /// Non-uniform any-angle graph of nodes formed from the vertices of a mesh
     /// </summary>
-    [Serializable]
     public class MeshVertexGraph : INodeGraph
     {
         public SerializableNodeDictionary nodes;
@@ -18,20 +17,24 @@ namespace Pathfinding
 
         public Chunk owner;
 
-        public Bounds bounds;
+        public MeshVertexGraph(Chunk _owner, List<Vector3> keys, List<Node> values)
+        {
+            owner = _owner;
+            nodes = new SerializableNodeDictionary();
+            nodes.Deserialize(keys, values);
+        }
 
         /// <summary>
         /// Creates nodes for each vertex in the mesh, gets neighbours from triangle information
         /// </summary>
         /// <param name="filter">Mesh filter that contains the target mesh, need access to its transform to calculate world positions</param>
         /// <param name="_bounds">Bounds of owning chunk, used to check which nodes are on the bounds (and need to know cross chunk neighbours)</param>
-        public MeshVertexGraph(MeshFilter filter, Bounds _bounds, Chunk _owner)
+        public MeshVertexGraph(MeshFilter filter, Chunk _owner)
         {
             owner = _owner;
 
             nodes = new SerializableNodeDictionary();
 
-            bounds = _bounds;
 
             var mesh = filter.sharedMesh;
 
@@ -102,7 +105,7 @@ namespace Pathfinding
 
         public void FindCrossChunkNeighbours()
         {
-            var max = bounds.max;
+            var max = owner.bounds.max;
             foreach (var node in nodes.Values)
             {
                 if (owner.xNeighbour != null)

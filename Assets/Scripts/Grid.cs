@@ -9,7 +9,6 @@ namespace Pathfinding
     /// <summary>
     /// Cubic / Cuboid grid of nodes
     /// </summary>
-    [Serializable]
     public class Grid : INodeGraph
     {
         /// <summary>
@@ -49,10 +48,6 @@ namespace Pathfinding
         //no noticeable generation performance diff, but serializable
         public FlattenedNode3DArray nodes;
 
-        public Vector3 center;
-
-        public Vector3 extents;
-
         public Vector3 step;
 
         public int xSize;
@@ -61,21 +56,33 @@ namespace Pathfinding
 
         public Chunk owner;
 
+        public Grid(Chunk _owner, FlattenedNode3DArray _nodes, Vector3 _step)
+        {
+            owner = _owner;
+            nodes = _nodes;
+
+            xSize = nodes.dimensions[0];
+            ySize = nodes.dimensions[1];
+            zSize = nodes.dimensions[2];
+
+            step = _step;
+        }
+
         /// <summary>
         /// Builds a grid around center with given settings
         /// </summary>
         /// <param name="_center">Grid center</param>
         /// <param name="settings">Grid settings (size / step etc)</param>
         /// <param name="GetIsoValue">Function that nodes use to determine their iso value</param>
-        public Grid(Vector3 _center, GridGenerationSettings settings, Func<Vector3, float> GetIsoValue, Chunk _owner)
+        public Grid(GridGenerationSettings settings, Func<Vector3, float> GetIsoValue, Chunk _owner)
         {
             owner = _owner;
             settings.step.x = Mathf.Max(settings.step.x, 0.5f);
             settings.step.y = Mathf.Max(settings.step.y, 0.5f);
             settings.step.z = Mathf.Max(settings.step.z, 0.5f);
 
-            center = _center;
-            extents = settings.chunkSize;
+            var center = owner.bounds.center;
+            var extents = settings.chunkSize;
             step = settings.step;
             xSize = (int)(extents.x / step.x);
             ySize = (int)(extents.y / step.y);
@@ -84,7 +91,8 @@ namespace Pathfinding
             //nodes = new GridNode[xSize, ySize, zSize];
             nodes = new FlattenedNode3DArray(FlattenedArrayUtils.New<Node>(xSize, ySize, zSize));
 
-            Vector3 pos = center - extents / 2;
+            Vector3 min = owner.bounds.min;
+            Vector3 pos = min;
             for (int x = 0; x < xSize; x++)
             {
                 for (int y = 0; y < ySize; y++)
@@ -94,10 +102,10 @@ namespace Pathfinding
                         nodes[x, y, z] = new Node(pos, GetIsoValue(pos));
                         pos.z += step.z;
                     }
-                    pos.z = center.z - extents.z / 2;
+                    pos.z = min.z;
                     pos.y += step.y;
                 }
-                pos.y = center.y - extents.y / 2;
+                pos.y = min.y;
                 pos.x += step.x;
             }
 
@@ -261,16 +269,16 @@ namespace Pathfinding
         /// <returns></returns>
         public Node GetClosestNode(Vector3 position)
         {
-            Vector3 startCorner = center - extents / 2;
+            Vector3 min = owner.bounds.min;
 
 
-            int x = Mathf.RoundToInt((position.x - startCorner.x) / step.x);
+            int x = Mathf.RoundToInt((position.x - min.x) / step.x);
             x = Mathf.Clamp(x, 0, xSize - 1);
 
-            int y = Mathf.RoundToInt((position.y - startCorner.y) / step.y);
+            int y = Mathf.RoundToInt((position.y - min.y) / step.y);
             y = Mathf.Clamp(y, 0, ySize - 1);
 
-            int z = Mathf.RoundToInt((position.z - startCorner.z) / step.z);
+            int z = Mathf.RoundToInt((position.z - min.z) / step.z);
             z = Mathf.Clamp(z, 0, zSize - 1);
 
             return nodes[x, y, z];

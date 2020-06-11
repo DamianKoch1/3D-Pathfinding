@@ -14,6 +14,7 @@ namespace Pathfinding
     {
         public Vector3 pos;
 
+        [NonSerialized]
         public Node parent;
 
         [NonSerialized]

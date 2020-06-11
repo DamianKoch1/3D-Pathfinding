@@ -46,20 +46,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridSettings: {fileID: 11400000, guid: dea0eedbb8a3f0e4989b03080cc1983d, type: 2}
-  obstacleSettings: {fileID: 11400000, guid: 761823c8209c62942b5a9365229c1958, type: 2}
   pathfindingSettings: {fileID: 11400000, guid: a0fcd3c5fe6e8524992fc7656e1f7a1d,
     type: 2}
+  pathfindingType: 1
   start: {fileID: 0}
   goal: {fileID: 0}
-  obstacles: {fileID: 0}
   chunkCount: {x: 0, y: 0, z: 0}
   chunkPrefab: {fileID: 1922032870843716596, guid: d7a4f35e7f71e6149aa9d2f912ef412b,
     type: 3}
+  chunks:
+    dimensions: 
+    items: []
   autoGenerate: 0
   visualizePathfinding: 0
   hasOutOfRangeChunks: 0
-  hasGrid: 0
-  hasGraph: 0
 --- !u!120 &708539449575241519
 LineRenderer:
   m_ObjectHideFlags: 0
