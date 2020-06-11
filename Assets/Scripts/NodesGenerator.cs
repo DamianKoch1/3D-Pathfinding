@@ -469,22 +469,52 @@ namespace Pathfinding
             VisualizePathfinding();
         }
 
-        public void Serialize()
+        public async Task Serialize()
         {
-            var message = new GeneratorData(this);
-            var bytes = MessagePackSerializer.Serialize(message);
-            File.WriteAllBytes(Application.persistentDataPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", bytes);
+            var data = new GeneratorData(this);
+            Stream stream = null;
+            try
+            {
+                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.OpenOrCreate);
+
+                await Task.Run(() => MessagePackSerializer.SerializeAsync(stream, data));
+            }
+            catch (IOException e)
+            {
+                print(e);
+            }
+            finally
+            {
+                stream?.Close();
+            }
         }
 
-        public void Deserialize()
+        public async Task Deserialize()
         {
-            var bytes = File.ReadAllBytes(Application.persistentDataPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes");
-            var message = MessagePackSerializer.Deserialize<GeneratorData>(bytes);
-            for (int i = 0; i < message.chunkData.Length; i++)
+            Stream stream = null;
+            GeneratorData data = null;
+            try
             {
-                chunks[i].Deserialize(message.chunkData[i]);
+                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.OpenOrCreate);
+                data = await MessagePackSerializer.DeserializeAsync<GeneratorData>(stream);
+                await Task.Run(() => MessagePackSerializer.SerializeAsync(stream, data));
             }
-            MarchCubes(5);
+            catch (IOException e)
+            {
+                print(e);
+            }
+            finally
+            {
+                stream?.Close();
+                if (data != null)
+                {
+                    for (int i = 0; i < data.chunkData.Length; i++)
+                    {
+                        chunks[i].Deserialize(data.chunkData[i]);
+                    }
+                    MarchCubes(5);
+                }
+            }
         }
     }
 
