@@ -33,9 +33,11 @@ namespace MessagePack.Formatters.Pathfinding.Serialization
             }
 
             IFormatterResolver formatterResolver = options.Resolver;
-            writer.WriteArrayHeader(2);
+            writer.WriteArrayHeader(4);
             formatterResolver.GetFormatterWithVerify<global::Pathfinding.Node[,,]>().Serialize(ref writer, value.gridNodes, options);
             formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<global::UnityEngine.Vector3, global::Pathfinding.Node>>().Serialize(ref writer, value.graphNodes, options);
+            formatterResolver.GetFormatterWithVerify<global::UnityEngine.Vector3[]>().Serialize(ref writer, value.vertices, options);
+            formatterResolver.GetFormatterWithVerify<int[]>().Serialize(ref writer, value.triangles, options);
         }
 
         public global::Pathfinding.Serialization.ChunkData Deserialize(ref MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -50,6 +52,8 @@ namespace MessagePack.Formatters.Pathfinding.Serialization
             var length = reader.ReadArrayHeader();
             var __gridNodes__ = default(global::Pathfinding.Node[,,]);
             var __graphNodes__ = default(global::System.Collections.Generic.Dictionary<global::UnityEngine.Vector3, global::Pathfinding.Node>);
+            var __vertices__ = default(global::UnityEngine.Vector3[]);
+            var __triangles__ = default(int[]);
 
             for (int i = 0; i < length; i++)
             {
@@ -63,15 +67,23 @@ namespace MessagePack.Formatters.Pathfinding.Serialization
                     case 1:
                         __graphNodes__ = formatterResolver.GetFormatterWithVerify<global::System.Collections.Generic.Dictionary<global::UnityEngine.Vector3, global::Pathfinding.Node>>().Deserialize(ref reader, options);
                         break;
+                    case 2:
+                        __vertices__ = formatterResolver.GetFormatterWithVerify<global::UnityEngine.Vector3[]>().Deserialize(ref reader, options);
+                        break;
+                    case 3:
+                        __triangles__ = formatterResolver.GetFormatterWithVerify<int[]>().Deserialize(ref reader, options);
+                        break;
                     default:
                         reader.Skip();
                         break;
                 }
             }
 
-            var ____result = new global::Pathfinding.Serialization.ChunkData(__gridNodes__, __graphNodes__);
+            var ____result = new global::Pathfinding.Serialization.ChunkData(__gridNodes__, __graphNodes__, __vertices__, __triangles__);
             ____result.gridNodes = __gridNodes__;
             ____result.graphNodes = __graphNodes__;
+            ____result.vertices = __vertices__;
+            ____result.triangles = __triangles__;
             reader.Depth--;
             return ____result;
         }

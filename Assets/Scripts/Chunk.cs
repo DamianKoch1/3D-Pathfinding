@@ -223,6 +223,16 @@ namespace Pathfinding
             {
                 graph = new MeshVertexGraph(this, data.graphNodes);
             }
+            if (data.triangles?.Length > 0)
+            {
+                var mesh = new Mesh();
+                mesh.vertices = data.vertices;
+                mesh.triangles = data.triangles;
+                mesh.RecalculateNormals();
+                mesh.Optimize();
+                GetComponent<MeshFilter>().sharedMesh = mesh;
+                GetComponent<MeshCollider>().sharedMesh = mesh;
+            }
         }
     }
 

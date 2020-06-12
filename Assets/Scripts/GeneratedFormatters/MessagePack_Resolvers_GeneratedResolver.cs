@@ -49,17 +49,18 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(9)
+            lookup = new global::System.Collections.Generic.Dictionary<Type, int>(10)
             {
                 { typeof(global::Pathfinding.Node[,,]), 0 },
                 { typeof(global::Pathfinding.Serialization.ChunkData[]), 1 },
                 { typeof(global::System.Collections.Generic.Dictionary<global::UnityEngine.Vector3, global::Pathfinding.Node>), 2 },
                 { typeof(global::System.Collections.Generic.List<global::Pathfinding.NodeIdentifier>), 3 },
-                { typeof(global::Pathfinding.ChunkNeighbourType), 4 },
-                { typeof(global::Pathfinding.Node), 5 },
-                { typeof(global::Pathfinding.NodeIdentifier), 6 },
-                { typeof(global::Pathfinding.Serialization.ChunkData), 7 },
-                { typeof(global::Pathfinding.Serialization.GeneratorData), 8 },
+                { typeof(global::UnityEngine.Vector3[]), 4 },
+                { typeof(global::Pathfinding.ChunkNeighbourType), 5 },
+                { typeof(global::Pathfinding.Node), 6 },
+                { typeof(global::Pathfinding.NodeIdentifier), 7 },
+                { typeof(global::Pathfinding.Serialization.ChunkData), 8 },
+                { typeof(global::Pathfinding.Serialization.GeneratorData), 9 },
             };
         }
 
@@ -77,11 +78,12 @@ namespace MessagePack.Resolvers
                 case 1: return new global::MessagePack.Formatters.ArrayFormatter<global::Pathfinding.Serialization.ChunkData>();
                 case 2: return new global::MessagePack.Formatters.DictionaryFormatter<global::UnityEngine.Vector3, global::Pathfinding.Node>();
                 case 3: return new global::MessagePack.Formatters.ListFormatter<global::Pathfinding.NodeIdentifier>();
-                case 4: return new MessagePack.Formatters.Pathfinding.ChunkNeighbourTypeFormatter();
-                case 5: return new MessagePack.Formatters.Pathfinding.NodeFormatter();
-                case 6: return new MessagePack.Formatters.Pathfinding.NodeIdentifierFormatter();
-                case 7: return new MessagePack.Formatters.Pathfinding.Serialization.ChunkDataFormatter();
-                case 8: return new MessagePack.Formatters.Pathfinding.Serialization.GeneratorDataFormatter();
+                case 4: return new global::MessagePack.Formatters.ArrayFormatter<global::UnityEngine.Vector3>();
+                case 5: return new MessagePack.Formatters.Pathfinding.ChunkNeighbourTypeFormatter();
+                case 6: return new MessagePack.Formatters.Pathfinding.NodeFormatter();
+                case 7: return new MessagePack.Formatters.Pathfinding.NodeIdentifierFormatter();
+                case 8: return new MessagePack.Formatters.Pathfinding.Serialization.ChunkDataFormatter();
+                case 9: return new MessagePack.Formatters.Pathfinding.Serialization.GeneratorDataFormatter();
                 default: return null;
             }
         }

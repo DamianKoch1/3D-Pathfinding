@@ -37,10 +37,19 @@ namespace Pathfinding.Serialization
         [Key(1)]
         public Dictionary<Vector3, Node> graphNodes;
 
-        public ChunkData(Node[,,] _gridNodes, Dictionary<Vector3, Node> _graphNodes)
+        [Key(2)]
+        public Vector3[] vertices;
+
+        [Key(3)]
+        public int[] triangles;
+
+
+        public ChunkData(Node[,,] _gridNodes, Dictionary<Vector3, Node> _graphNodes, Vector3[] _vertices, int[] _triangles)
         {
             gridNodes = _gridNodes;
             graphNodes = _graphNodes;
+            vertices = _vertices;
+            triangles = _triangles;
         }
 
         public ChunkData(Chunk source)
@@ -48,6 +57,12 @@ namespace Pathfinding.Serialization
             if (source.grid != null)
             {
                 gridNodes = source.grid.nodes;
+            }
+            else
+            {
+                var filter = source.GetComponent<MeshFilter>();
+                vertices = filter.sharedMesh?.vertices;
+                triangles = filter.sharedMesh?.triangles;
             }
 
             if (source.graph != null)

@@ -68,40 +68,18 @@ namespace Pathfinding.Editors
 
             if (generator.chunks != null)
             {
-                if (generator.chunks.Length == 0) GUI.enabled = false;
+                if (generator.chunks.Length == 0 || generator.serializing) GUI.enabled = false;
                 else if (generator.chunks[0].grid == null && generator.chunks[0].graph == null) GUI.enabled = false;
 
                 if (GUILayout.Button("Save"))
                 {
-                    //var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
-                    //if (!data)
-                    //{
-                    //    data = CreateInstance<GeneratorData>();
-                    //    AssetDatabase.CreateAsset(data, "Assets/Resources/Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name + ".asset");
-                    //}
-                    //generator.SerializeInto(data);
-                    //EditorUtility.SetDirty(data);
-                    //AssetDatabase.SaveAssets();
-                    //Resources.UnloadAsset(data);
-
-                    //generator.SerializeBinary();
-
                     generator.Serialize();
                 }
 
-                GUI.enabled = true;
+                GUI.enabled = !generator.deserializing;
 
                 if (GUILayout.Button("Load"))
                 {
-                    //var data = Resources.Load<GeneratorData>("Generator Data/" + SceneManager.GetActiveScene().name + "_" + generator.name);
-                    //if (data)
-                    //{
-                    //    generator.DeserializeFrom(data);
-                    //    Resources.UnloadAsset(data);
-                    //}
-
-                    //generator.DeserializeBinary();
-
                     generator.Deserialize();
                 }
 

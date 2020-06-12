@@ -68,7 +68,7 @@ namespace Pathfinding
                 case PathfindingType.navmeshOnly:
                     await MarchCubes(10);
                     GenerateGraph();
-                    //ClearGrid();
+                    ClearGrid();
                     break;
                 case PathfindingType.both:
                     await MarchCubes(10);
@@ -469,15 +469,20 @@ namespace Pathfinding
             VisualizePathfinding();
         }
 
+        [HideInInspector]
+        public bool serializing;
+
         public async Task Serialize()
         {
             var data = new GeneratorData(this);
             Stream stream = null;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            serializing = true;
             try
             {
-                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.OpenOrCreate);
+                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Create, FileAccess.Write, FileShare.None, 128000);
 
-                await Task.Run(() => MessagePackSerializer.SerializeAsync(stream, data));
+                await MessagePackSerializer.SerializeAsync(stream, data, options);
             }
             catch (IOException e)
             {
@@ -486,18 +491,28 @@ namespace Pathfinding
             finally
             {
                 stream?.Close();
+                serializing = false;
+                print("Saved, " + sw.Elapsed.TotalSeconds + "s");
+                sw.Stop();
             }
         }
+
+        public MessagePackCompression compression;
+        public MessagePackSerializerOptions options => MessagePackSerializerOptions.Standard.WithCompression(compression);
+
+        [HideInInspector]
+        public bool deserializing;
 
         public async Task Deserialize()
         {
             Stream stream = null;
             GeneratorData data = null;
+            deserializing = true;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.OpenOrCreate);
-                data = await MessagePackSerializer.DeserializeAsync<GeneratorData>(stream);
-                await Task.Run(() => MessagePackSerializer.SerializeAsync(stream, data));
+                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Open, FileAccess.Read, FileShare.None, 128000);
+                data = await MessagePackSerializer.DeserializeAsync<GeneratorData>(stream, options);
             }
             catch (IOException e)
             {
@@ -506,13 +521,22 @@ namespace Pathfinding
             finally
             {
                 stream?.Close();
+                deserializing = false;
                 if (data != null)
                 {
+                    print("Loaded, " + sw.Elapsed.TotalSeconds + "s");
+                    sw.Restart();
                     for (int i = 0; i < data.chunkData.Length; i++)
                     {
                         chunks[i].Deserialize(data.chunkData[i]);
                     }
-                    MarchCubes(5);
+                    if (pathfindingType != PathfindingType.navmeshOnly)
+                    {
+                        MarchCubes(5);
+                    }
+                    AssignNeighbours();
+                    print("Init, " + sw.Elapsed.TotalSeconds);
+                    sw.Stop();
                 }
             }
         }

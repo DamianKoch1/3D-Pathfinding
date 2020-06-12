@@ -57,9 +57,10 @@ MonoBehaviour:
   chunks:
     dimensions: 
     items: []
-  autoGenerate: 0
   visualizePathfinding: 0
-  hasOutOfRangeChunks: 0
+  serializing: 0
+  compression: 1
+  deserializing: 0
 --- !u!120 &708539449575241519
 LineRenderer:
   m_ObjectHideFlags: 0
