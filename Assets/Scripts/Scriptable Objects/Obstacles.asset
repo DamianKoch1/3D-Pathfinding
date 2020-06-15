@@ -13,30 +13,6 @@ MonoBehaviour:
   m_Name: Obstacles
   m_EditorClassIdentifier: 
   prefab: {fileID: 3167575916594899182, guid: 9c43c6a5ff2ecd141bd99fee1772b1ab, type: 3}
-  count: 50
+  count: 300
   minScale: 0.1
-  maxScale: 100
-  scaleDistribution:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: -0.01594925
-      value: 0.1625061
-      inSlope: 0.8243462
-      outSlope: 0.8243462
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0.8243462
-      outSlope: 0.8243462
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  maxScale: 300

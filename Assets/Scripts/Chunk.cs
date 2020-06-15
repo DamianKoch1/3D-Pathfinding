@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using Pathfinding.NavMesh;
 using Pathfinding.Serialization;
+using Pathfinding.Containers;
 
 namespace Pathfinding
 {
@@ -63,7 +64,7 @@ namespace Pathfinding
         /// <summary>
         /// Creates Grid using settings passed from Initialize
         /// </summary>
-        public void GenerateGrid()
+        public void GenerateGrid(bool blockedOnly = false)
         {
             System.Func<Vector3, float> GetIsoValue = null;
             switch (gridSettings.mode)
@@ -82,7 +83,7 @@ namespace Pathfinding
                     break;
             }
 
-            grid = new Grid(gridSettings, GetIsoValue, this);
+            grid = new Grid(gridSettings, GetIsoValue, this, blockedOnly);
         }
 
         /// <summary>

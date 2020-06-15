@@ -24,7 +24,7 @@ namespace Pathfinding
         public GenerationMode mode;
 
         [Header("Overlap settings")]
-        [Range(0, 10)]
+        [Range(0, 50)]
         public float navMeshOffset;
 
         [Header("Noise settings")]

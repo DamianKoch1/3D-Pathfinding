@@ -16,4 +16,4 @@ MonoBehaviour:
   heuristic: 0
   costIncrease: 1
   benchmark: 1
-  greediness: 0.807
+  greediness: 0.7

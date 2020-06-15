@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using Pathfinding.Containers;
 using Pathfinding.Serialization;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Pathfinding
     /// Node used in grids / graphs / pathfinding, knows its world position, (grid index), neighbours, cost, heuristic, and previous node of path
     /// </summary>
     [MessagePackObject]
-    public class Node : IComparable<Node>, IEquatable<Node>
+    public class Node : IComparable<Node>, IEquatable<Node>, IBucketElement
     {
         [Key(0)]
         public Vector3 pos;
@@ -114,8 +115,14 @@ namespace Pathfinding
 
         public bool Equals(Node other)
         {
-            return pos.Equals(other.pos);
+            if (pos.Equals(other.pos))
+            {
+                return F >= other.F;
+            }
+            return false;
         }
+
+        public float GetBucketValue() => F;
     }
 
     [MessagePackObject]

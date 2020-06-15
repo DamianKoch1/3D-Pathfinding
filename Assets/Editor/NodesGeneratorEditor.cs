@@ -25,7 +25,7 @@ namespace Pathfinding.Editors
                 generator.GenerateChunks();
             }
 
-            if (generator.chunks == null) GUI.enabled = false;
+            if (generator.chunks == null || generator.generating) GUI.enabled = false;
 
             if (GUILayout.Button("Generate Nodes"))
             {

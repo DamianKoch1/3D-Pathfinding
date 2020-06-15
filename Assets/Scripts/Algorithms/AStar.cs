@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Pathfinding.Containers;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -21,14 +22,14 @@ namespace Pathfinding.Algorithms
         /// <param name="maxIterations">Max number of loop iterations, prevents infinite loops</param>
         /// <param name="nodeCount">Approximate total node count, determines start capacity of path stack</param>
         /// <returns></returns>
-        public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
+        public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out BucketList<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
         {
             int neighbourChecks = 0;
 
             int numIterations = 0;
 
             //euclidean distance from start to end
-            float distance = 0;
+            float distance = Vector3.Distance(start.pos, goal.pos); 
 
             //full length of path
             float pathLength = 0;
@@ -37,15 +38,13 @@ namespace Pathfinding.Algorithms
 
             if (settings.benchmark)
             {
-                distance = Vector3.Distance(start.pos, goal.pos);
                 sw.Start();
             }
 
             var startCapacity = nodeCount / 100;
             Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-            //much faster .Contains than list
-            openNodes = new SortedSet<Node>();
+            openNodes = new BucketList<Node>((int)distance / 200);
 
             closedNodes = new HashSet<Node>();
 
@@ -58,7 +57,7 @@ namespace Pathfinding.Algorithms
             while (openNodes.Count != 0 && !closedNodes.Contains(goal))
             {
                 if (++numIterations == maxIterations) break;
-                var first = openNodes.First();
+                var first = openNodes.GetLowest();
                 current = first;
                 openNodes.Remove(first);
                 closedNodes.Add(first);

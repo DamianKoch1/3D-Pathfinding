@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Pathfinding.Algorithms;
 using System.Collections.Generic;
+using Pathfinding.Containers;
 
 namespace Pathfinding
 {
@@ -54,7 +55,7 @@ namespace Pathfinding
             return 0;
         }
 
-        public Stack<Vector3> RunAlgorithm(Node start, Node goal, float isoLevel, out SortedSet<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
+        public Stack<Vector3> RunAlgorithm(Node start, Node goal, float isoLevel, out BucketList<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 3000)
         {
             switch (algorithm)
             {

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Pathfinding.Serialization
+namespace Pathfinding.Containers
 {
     [Serializable]
     public class Flattened3DArray<T>

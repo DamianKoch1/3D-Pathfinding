@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Pathfinding
 {
     /// <summary>
-    /// Prototype 3D NavMesh Agent
+    /// Basic 3D NavMesh Agent
     /// </summary>
     public class PathFollower : MonoBehaviour
     {
@@ -33,9 +33,9 @@ namespace Pathfinding
         private Vector3 dir;
 
 
-        void Start()
+        void Awake()
         {
-            FindPath();
+            generator.OnInitialize += FindPath;
         }
 
         private void FindPath()

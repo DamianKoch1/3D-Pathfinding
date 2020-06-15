@@ -2,6 +2,7 @@
 using MessagePack.Resolvers;
 using MessagePack.Unity;
 using MessagePack.Unity.Extension;
+using Pathfinding.Containers;
 using Pathfinding.Serialization;
 using SimplexNoise;
 using System.Collections;
@@ -44,38 +45,66 @@ namespace Pathfinding
         [SerializeField]
         public bool visualizePathfinding;
 
-        private SortedSet<Node> openNodes;
+        private BucketList<Node> openNodes;
         private HashSet<Node> closedNodes;
 
-        //used for profiling
+        private int gridNodeCount => ((int)(gridSettings.chunkSize.x / gridSettings.step.x) + (int)(gridSettings.chunkSize.y / gridSettings.step.y) + (int)(gridSettings.chunkSize.z / gridSettings.step.z)) * chunkCount.x * chunkCount.y * chunkCount.z;
+
         private void Start()
         {
-            AssignNeighbours();
-            FindGridPath(start.position, goal.position, pathfindingSettings);
-            FindGraphPath(start.position, goal.position, pathfindingSettings);
+            //Profile();
+            Initialize();
         }
 
-        public async void GenerateNodes()
+        private async void Initialize()
+        {
+            await GenerateNodes();
+            AssignNeighbours();
+            OnInitialize?.Invoke();
+        }
+
+        private async void Profile()
+        {
+            await Deserialize();
+            if (pathfindingType != PathfindingType.navmeshOnly)
+            {
+                FindGridPath(start.position, goal.position, pathfindingSettings);
+            }
+            if (pathfindingType != PathfindingType.gridOnly)
+            {
+                FindGraphPath(start.position, goal.position, pathfindingSettings);
+            }
+        }
+
+        [HideInInspector]
+        public bool generating;
+
+        public async Task GenerateNodes()
         {
             NAVMESH_LAYER = LayerMask.GetMask("NavMesh");
             OBSTACLE_LAYER = LayerMask.GetMask("NavMeshObstacle");
-
-            await GenerateGrid(0);
+            generating = true;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             switch (pathfindingType)
             {
                 case PathfindingType.gridOnly:
+                    await GenerateGrid();
                     break;
                 case PathfindingType.navmeshOnly:
-                    await MarchCubes(10);
-                    GenerateGraph();
+                    await GenerateGrid(true);
+                    await MarchCubes();
+                    await GenerateGraph();
                     ClearGrid();
                     break;
                 case PathfindingType.both:
-                    await MarchCubes(10);
-                    GenerateGraph();
+                    await GenerateGrid();
+                    await MarchCubes();
+                    await GenerateGraph();
                     break;
             }
-            print("Finished generating");
+            generating = false;
+            print("Finished generating, " + sw.Elapsed.TotalSeconds + "s");
+            sw.Stop();
         }
 
         public async Task ClearGrid(int delay = 0)
@@ -168,7 +197,7 @@ namespace Pathfinding
         /// <summary>
         /// Lets all chunk generate their grid, then saves neighbours from adjacent chunks
         /// </summary>
-        public async Task GenerateGrid(int delay = 0)
+        public async Task GenerateGrid(bool blockedOnly = false, int delay = 0)
         {
             if (chunks == null) return;
 
@@ -182,9 +211,9 @@ namespace Pathfinding
             }
             foreach (var chunk in chunks.items)
             {
-                chunk.GenerateGrid();
-                await Task.Delay(delay);
+                chunk.GenerateGrid(blockedOnly);
             }
+            if (blockedOnly) return;
             foreach (var chunk in chunks.items)
             {
                 chunk.grid.FindCrossChunkNeighbours();
@@ -215,6 +244,7 @@ namespace Pathfinding
         /// </summary>
         public void Clear()
         {
+            generating = false;
             if (chunks == null) return;
             StopAllCoroutines();
             GetComponent<LineRenderer>().positionCount = 0;
@@ -247,7 +277,7 @@ namespace Pathfinding
         /// <returns></returns>
         public Node GetClosestGridNode(Vector3 position)
         {
-            return GetChunk(position).grid.GetClosestNode(position);
+            return GetChunk(position).grid?.GetClosestNode(position);
         }
 
         /// <summary>
@@ -257,7 +287,7 @@ namespace Pathfinding
         /// <returns></returns>
         public Node GetClosestGraphNode(Vector3 position)
         {
-            return GetChunk(position).graph.GetClosestNode(position);
+            return GetChunk(position).graph?.GetClosestNode(position);
         }
 
         /// <summary>
@@ -286,12 +316,6 @@ namespace Pathfinding
                 if (Vector3.Distance(pos, start) < 0.5f) break;
                 if (maxRaycasts <= 0) break;
             }
-
-            foreach (var hit in hits)
-            {
-                Debug.DrawLine(hit.point, hit.point + hit.normal, Color.white, 10);
-            }
-
             return hits;
         }
 
@@ -305,9 +329,9 @@ namespace Pathfinding
         public Stack<Vector3> FindGridPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
         {
             var pathPoints = new Stack<Vector3>();
+            if (pathfindingType == PathfindingType.navmeshOnly) return pathPoints;
             if (chunks == null) return pathPoints;
 
-            var lr = GetComponent<LineRenderer>();
 
             var tempNodes = new TempNodeDictionary();
 
@@ -317,17 +341,22 @@ namespace Pathfinding
             tempNodes.AddNode(gridStart, start);
             tempNodes.AddNode(gridGoal, goal);
 
-            pathPoints = settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes);
+
+            pathPoints = settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes, 50000, gridNodeCount);
 
             tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
 
-            lr.positionCount = pathPoints.Count;
-            lr.SetPositions(pathPoints.ToArray());
+            if (settings.benchmark)
+            {
+                var lr = GetComponent<LineRenderer>();
+                lr.positionCount = pathPoints.Count;
+                lr.SetPositions(pathPoints.ToArray());
+            }
             return pathPoints;
         }
 
         /// <summary>
-        /// The only thing you need to call after hot reloading, finds the actual nodes of each nodes neighbour references and stores them
+        /// Finds the actual nodes of each nodes neighbour references and stores them
         /// </summary>
         public void AssignNeighbours()
         {
@@ -349,14 +378,8 @@ namespace Pathfinding
         public Stack<Vector3> FindGraphPath(Vector3 start, Vector3 goal, PathfindingSettings settings)
         {
             var pathPoints = new Stack<Vector3>();
+            if (pathfindingType == PathfindingType.gridOnly) return pathPoints;
             if (chunks == null) return pathPoints;
-
-            var lr = GetComponent<LineRenderer>();
-
-
-
-            openNodes = new SortedSet<Node>();
-            closedNodes = new HashSet<Node>();
 
 
             var nodesClosestToHit = new List<Node>();
@@ -389,7 +412,8 @@ namespace Pathfinding
                 }
                 tempNodes.AddNode(nodesClosestToHit[0], start);
                 tempNodes.AddNode(nodesClosestToHit[hits.Count - 1], goal);
-                pathPoints = settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes);
+
+                pathPoints = settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes, 50000, gridNodeCount / 100);
                 tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
             }
             else
@@ -398,8 +422,12 @@ namespace Pathfinding
                 pathPoints.Push(start);
             }
 
-            lr.positionCount = pathPoints.Count;
-            lr.SetPositions(pathPoints.ToArray());
+            if (settings.benchmark)
+            {
+                var lr = GetComponent<LineRenderer>();
+                lr.positionCount = pathPoints.Count;
+                lr.SetPositions(pathPoints.ToArray());
+            }
             return pathPoints;
         }
 
@@ -475,22 +503,22 @@ namespace Pathfinding
         public async Task Serialize()
         {
             var data = new GeneratorData(this);
-            Stream stream = null;
+            FileStream fs = null;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             serializing = true;
             try
             {
-                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Create, FileAccess.Write, FileShare.None, 128000);
-
-                await MessagePackSerializer.SerializeAsync(stream, data, options);
+                fs = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Create, FileAccess.Write, FileShare.None, 128000);
+                await Task.Run(() => MessagePackSerializer.SerializeAsync(fs, data, options));
+                //MessagePackSerializer.Serialize(fs, data, options);
             }
-            catch (IOException e)
+            catch (System.Exception e)
             {
                 print(e);
             }
             finally
             {
-                stream?.Close();
+                fs?.Close();
                 serializing = false;
                 print("Saved, " + sw.Elapsed.TotalSeconds + "s");
                 sw.Stop();
@@ -503,24 +531,27 @@ namespace Pathfinding
         [HideInInspector]
         public bool deserializing;
 
+        public System.Action OnInitialize;
+
         public async Task Deserialize()
         {
-            Stream stream = null;
+            FileStream fs = null;
             GeneratorData data = null;
             deserializing = true;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                stream = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Open, FileAccess.Read, FileShare.None, 128000);
-                data = await MessagePackSerializer.DeserializeAsync<GeneratorData>(stream, options);
+                fs = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Open, FileAccess.Read, FileShare.None, 128000);
+                data = await Task.Run(() => MessagePackSerializer.DeserializeAsync<GeneratorData>(fs, options)).Result;
+                //data = MessagePackSerializer.Deserialize<GeneratorData>(fs, options);
             }
-            catch (IOException e)
+            catch (System.Exception e)
             {
                 print(e);
             }
             finally
             {
-                stream?.Close();
+                fs?.Close();
                 deserializing = false;
                 if (data != null)
                 {
@@ -532,9 +563,10 @@ namespace Pathfinding
                     }
                     if (pathfindingType != PathfindingType.navmeshOnly)
                     {
-                        MarchCubes(5);
+                        MarchCubes(1);
                     }
                     AssignNeighbours();
+                    OnInitialize?.Invoke();
                     print("Init, " + sw.Elapsed.TotalSeconds);
                     sw.Stop();
                 }

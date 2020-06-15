@@ -37,6 +37,7 @@ namespace Pathfinding
                     if (owner.zNeighbour == null) return 1;
                     return owner.zNeighbour.grid[x, y, z - zSize];
                 }
+                if (nodes[x, y, z] == null) return 0;
                 return nodes[x, y, z].isoValue;
             }
         }
@@ -78,7 +79,7 @@ namespace Pathfinding
         /// <param name="_center">Grid center</param>
         /// <param name="settings">Grid settings (size / step etc)</param>
         /// <param name="GetIsoValue">Function that nodes use to determine their iso value</param>
-        public Grid(GridGenerationSettings settings, Func<Vector3, float> GetIsoValue, Chunk _owner)
+        public Grid(GridGenerationSettings settings, Func<Vector3, float> GetIsoValue, Chunk _owner, bool onlyBlocked = false)
         {
             owner = _owner;
             settings.step.x = Mathf.Max(settings.step.x, 0.5f);
@@ -103,7 +104,11 @@ namespace Pathfinding
                 {
                     for (int z = 0; z < zSize; z++)
                     {
-                        nodes[x, y, z] = new Node(pos, GetIsoValue(pos));
+                        var isoValue = GetIsoValue(pos);
+                        if (!onlyBlocked || isoValue > 0)
+                        {
+                            nodes[x, y, z] = new Node(pos, isoValue);
+                        }
                         pos.z += step.z;
                     }
                     pos.z = min.z;
@@ -112,6 +117,7 @@ namespace Pathfinding
                 pos.y = min.y;
                 pos.x += step.x;
             }
+            if (onlyBlocked) return;
 
             for (int x = 0; x < xSize; x++)
             {
