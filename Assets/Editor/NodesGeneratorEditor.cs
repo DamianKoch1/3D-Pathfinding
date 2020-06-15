@@ -32,16 +32,6 @@ namespace Pathfinding.Editors
                 generator.GenerateNodes();
             }
 
-            if (GUILayout.Button("Assign Neighbours"))
-            {
-                generator.AssignNeighbours();
-            }
-
-            if (GUILayout.Button("March Cubes"))
-            {
-                generator.MarchCubes(10);
-            }
-
             if (!generator.start || !generator.goal) GUI.enabled = false;
 
             if (GUILayout.Button("Find Grid Path"))

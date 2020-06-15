@@ -26,14 +26,13 @@ namespace Pathfinding
         }
 
         /// <summary>
-        /// Removes all temp nodes from the original nodes neighbours, invokes given action to e.g. remove temp nodes from open list
+        /// Removes all temp nodes from the original nodes neighbours
         /// </summary>
         /// <param name="clearReferences"></param>
-        public void Cleanup(Action<Node> clearReferences = null)
+        public void Cleanup()
         {
             foreach (var keyNode in Keys)
             {
-                clearReferences?.Invoke(this[keyNode]);
                 keyNode.neighbours.Remove(this[keyNode]);
             }
         }

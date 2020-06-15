@@ -46,7 +46,8 @@ namespace Pathfinding.Algorithms
             var startCapacity = nodeCount / 100;
             Stack<Vector3> path = new Stack<Vector3>(startCapacity);
 
-            openNodes = new BucketList<Node>((int)distance / 200);
+            openNodes = new BucketList<Node>((int)distance / 200, Mathf.Min(settings.Heuristic(start.pos, goal.pos) * settings.greediness, settings.CostIncrease(start.pos, goal.pos) * (1 - settings.greediness)));
+            //openNodes = new MinHeap<Node>(startCapacity * 10);
 
             closedNodes = new HashSet<Node>();
 
@@ -59,10 +60,12 @@ namespace Pathfinding.Algorithms
             while (openNodes.Count != 0 && !closedNodes.Contains(goal))
             {
                 if (++numIterations == maxIterations) break;
-                var first = openNodes.GetLowest();
-                current = first;
-                openNodes.Remove(first);
-                closedNodes.Add(first);
+
+                current = openNodes.ExtractMin();
+
+                //current = openNodes.ExtractMin();
+
+                closedNodes.Add(current);
 
                 foreach (var neighbour in current.neighbours)
                 {
@@ -74,7 +77,7 @@ namespace Pathfinding.Algorithms
                             if (!openNodes.Contains(neighbour))
                             {
                                 neighbour.costHeuristicBalance = settings.greediness;
-                                neighbour.parent = null;
+                                neighbour.parent = current;
                                 neighbour.cost = Mathf.Infinity;
                                 neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
                             }

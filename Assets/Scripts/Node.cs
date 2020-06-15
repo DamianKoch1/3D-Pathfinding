@@ -12,7 +12,7 @@ namespace Pathfinding
     /// Node used in grids / graphs / pathfinding, knows its world position, (grid index), neighbours, cost, heuristic, and previous node of path
     /// </summary>
     [MessagePackObject]
-    public class Node : IComparable<Node>, IEquatable<Node>, IBucketElement
+    public class Node : IHeapItem<Node>, IBucketItem
     {
         [Key(0)]
         public Vector3 pos;
@@ -50,6 +50,9 @@ namespace Pathfinding
                 return -1;
             }
         }
+
+        [IgnoreMember]
+        public int HeapIndex { set; get; }
 
         public Node(Vector3 _pos, float _isoValue, List<NodeIdentifier> _neighbourIdentifiers)
         {

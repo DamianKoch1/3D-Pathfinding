@@ -4,29 +4,32 @@ using UnityEngine;
 
 namespace Pathfinding.Containers
 {
-    public class BucketList<T> : IEnumerable<T> where T : IBucketElement
+    public class BucketList<T> : IEnumerable<T> where T : IBucketItem
     {
-        public List<HashSet<T>> buckets;
+        public List<List<T>> buckets;
 
         public readonly int bucketRange;
 
+        public readonly float minBucketValue;
+
         public int Count { private set; get; }
 
-        public BucketList(int _bucketRange)
+        public BucketList(int _bucketRange, float _minBucketValue)
         {
             bucketRange = _bucketRange;
-            buckets = new List<HashSet<T>>();
+            minBucketValue = _minBucketValue;
+            buckets = new List<List<T>>();
             Count = 0;
         }
 
         public void Add(T item)
         {
-            var bucket = (int)item.GetBucketValue() / bucketRange;
+            var bucket = (int)(item.GetBucketValue() - minBucketValue) / bucketRange;
             if (bucket >= buckets.Count)
             {
                 for (int i = buckets.Count; i <= bucket; i++)
                 {
-                    buckets.Add(new HashSet<T>());
+                    buckets.Add(new List<T>());
                 }
             }
             buckets[bucket].Add(item);
@@ -35,7 +38,7 @@ namespace Pathfinding.Containers
 
         public bool Contains(T item)
         {
-            var bucket = (int)item.GetBucketValue() / bucketRange;
+            var bucket = (int)(item.GetBucketValue() - minBucketValue) / bucketRange;
             if (bucket < 0) return false;
             if (bucket >= buckets.Count) return false;
             if (buckets[bucket].Count == 0) return false;
@@ -55,19 +58,22 @@ namespace Pathfinding.Containers
             return false;
         }
 
-        public T GetLowest()
+        public T ExtractMin()
         {
             for (int i = 0; i < buckets.Count; i++)
             {
-                foreach (var item in buckets[i])
+                if (buckets[i].Count == 0) continue;
+                for (int j = 0; j < buckets[i].Count; j++)
                 {
                     float lowest = Mathf.Infinity;
                     T lowestItem = default;
-                    if (item.GetBucketValue() < lowest)
+                    var currItem = buckets[i][j];
+                    if (currItem.GetBucketValue() < lowest)
                     {
-                        lowest = item.GetBucketValue();
-                        lowestItem = item;
+                        lowest = currItem.GetBucketValue();
+                        lowestItem = currItem;
                     }
+                    buckets[i].RemoveAt(j);
                     return lowestItem;
                 }
             }
@@ -90,7 +96,7 @@ namespace Pathfinding.Containers
             return GetEnumerator();
         }
     }
-    public interface IBucketElement
+    public interface IBucketItem
     {
         float GetBucketValue();
     }

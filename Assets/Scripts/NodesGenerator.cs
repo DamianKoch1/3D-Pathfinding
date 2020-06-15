@@ -1,15 +1,10 @@
 ﻿using MessagePack;
-using MessagePack.Resolvers;
-using MessagePack.Unity;
-using MessagePack.Unity.Extension;
 using Pathfinding.Containers;
 using Pathfinding.Serialization;
 using SimplexNoise;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -52,18 +47,25 @@ namespace Pathfinding
 
         private void Start()
         {
-            //Profile();
-            Initialize();
+            //Load();
+            Generate();
         }
 
-        private async void Initialize()
+        private async void Generate()
         {
             await GenerateNodes();
-            AssignNeighbours();
             OnInitialize?.Invoke();
+            if (pathfindingType != PathfindingType.navmeshOnly)
+            {
+                FindGridPath(start.position, goal.position, pathfindingSettings);
+            }
+            if (pathfindingType != PathfindingType.gridOnly)
+            {
+                FindGraphPath(start.position, goal.position, pathfindingSettings);
+            }
         }
 
-        private async void Profile()
+        private async void Load()
         {
             await Deserialize();
             if (pathfindingType != PathfindingType.navmeshOnly)
@@ -103,11 +105,12 @@ namespace Pathfinding
                     break;
             }
             generating = false;
+            AssignNeighbours();
             print("Finished generating, " + sw.Elapsed.TotalSeconds + "s");
             sw.Stop();
         }
 
-        public async Task ClearGrid(int delay = 0)
+        private async Task ClearGrid(int delay = 0)
         {
             foreach (var chunk in chunks.items)
             {
@@ -179,7 +182,7 @@ namespace Pathfinding
         /// <summary>
         /// Clears chunks that are no longer needed (when chunk count has been turned down)
         /// </summary>
-        public void ClearOutdatedChunks()
+        private void ClearOutdatedChunks()
         {
             foreach (var chunk in GetComponentsInChildren<Chunk>())
             {
@@ -197,7 +200,7 @@ namespace Pathfinding
         /// <summary>
         /// Lets all chunk generate their grid, then saves neighbours from adjacent chunks
         /// </summary>
-        public async Task GenerateGrid(bool blockedOnly = false, int delay = 0)
+        private async Task GenerateGrid(bool blockedOnly = false, int delay = 0)
         {
             if (chunks == null) return;
 
@@ -224,7 +227,7 @@ namespace Pathfinding
         /// <summary>
         /// Lets all chunks generate their graph, then saves neighbours from adjacent graphs, only call this after navmesh has been built
         /// </summary>
-        public async Task GenerateGraph(int delay = 0)
+        private async Task GenerateGraph(int delay = 0)
         {
             if (chunks == null) return;
             foreach (var chunk in chunks.items)
@@ -261,7 +264,7 @@ namespace Pathfinding
         /// </summary>
         /// <param name="position"></param>
         /// <returns></returns>
-        public Chunk GetChunk(Vector3 position)
+        private Chunk GetChunk(Vector3 position)
         {
             Vector3 localPos = position - transform.position;
             int x = (int)(localPos.x / gridSettings.chunkSize.x);
@@ -344,7 +347,7 @@ namespace Pathfinding
 
             pathPoints = settings.RunAlgorithm(tempNodes[gridStart], tempNodes[gridGoal], gridSettings.isoLevel, out openNodes, out closedNodes, 50000, gridNodeCount);
 
-            tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
+            tempNodes.Cleanup();
 
             if (settings.benchmark)
             {
@@ -358,7 +361,7 @@ namespace Pathfinding
         /// <summary>
         /// Finds the actual nodes of each nodes neighbour references and stores them
         /// </summary>
-        public void AssignNeighbours()
+        private void AssignNeighbours()
         {
             NAVMESH_LAYER = LayerMask.GetMask("NavMesh");
             OBSTACLE_LAYER = LayerMask.GetMask("NavMeshObstacle");
@@ -414,7 +417,7 @@ namespace Pathfinding
                 tempNodes.AddNode(nodesClosestToHit[hits.Count - 1], goal);
 
                 pathPoints = settings.RunAlgorithm(tempNodes[nodesClosestToHit[0]], tempNodes[nodesClosestToHit[hits.Count - 1]], -1, out openNodes, out closedNodes, 50000, gridNodeCount / 100);
-                tempNodes.Cleanup((n) => { openNodes.Remove(n); closedNodes.Remove(n); });
+                tempNodes.Cleanup();
             }
             else
             {
@@ -475,7 +478,7 @@ namespace Pathfinding
         /// <summary>
         /// Lets all chunks march the cubes of their grids
         /// </summary>
-        public async Task MarchCubes(int delay = 0)
+        private async Task MarchCubes(int delay = 0)
         {
             if (chunks == null) return;
             foreach (var chunk in chunks.items)
