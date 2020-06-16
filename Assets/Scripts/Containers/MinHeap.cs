@@ -44,7 +44,7 @@ namespace Pathfinding.Containers
             items.RemoveAt(Count - 1);
             if (Count > 1)
             {
-                BubbleDown(items[0]);
+                BubbleDown(0);
             }
             return min;
         }
@@ -54,33 +54,30 @@ namespace Pathfinding.Containers
             BubbleUp(item.HeapIndex);
         }
 
-        private void BubbleDown(T item)
+        private void BubbleDown(int index)
         {
             while (true)
             {
-                int childIndexLeft = item.HeapIndex * 2 + 1;
-                int childIndexRight = item.HeapIndex * 2 + 2;
+                int left = GetLeftChildIndex(index);
+                int right = GetRightChildIndex(index);
                 int child = 0;
 
-                if (childIndexLeft < Count)
+                if (left >= Count) return;
+
+                child = left;
+
+                if (right < Count)
                 {
-                    child = childIndexLeft;
-
-                    if (childIndexRight < Count)
+                    if (items[left].CompareTo(items[right]) < 0)
                     {
-                        if (items[childIndexLeft].CompareTo(items[childIndexRight]) < 0)
-                        {
-                            child = childIndexRight;
-                        }
+                        child = right;
                     }
-
-                    if (item.CompareTo(items[child]) > 0)
-                    {
-                        Swap(item.HeapIndex, child);
-                    }
-                    else return;
                 }
-                else return;
+
+                if (items[index].CompareTo(items[child]) <= 0) return;
+
+                Swap(index, child);
+                index = child;
             }
         }
 
@@ -90,11 +87,8 @@ namespace Pathfinding.Containers
 
             while (index > 0 && index < Count)
             {
-                if (items[parent].CompareTo(items[index]) < 0)
-                {
-                    Swap(index, parent);
-                }
-                else return;
+                if (items[parent].CompareTo(items[index]) >= 0) return;
+                Swap(index, parent);
                 index = parent;
                 parent = GetParentIndex(parent);
             }

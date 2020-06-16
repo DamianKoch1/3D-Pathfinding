@@ -1,6 +1,5 @@
 ﻿using Pathfinding.Containers;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding.Algorithms
@@ -60,8 +59,6 @@ namespace Pathfinding.Algorithms
                 if (++numIterations == maxIterations) break;
 
                 current = openNodes.ExtractMin();
-
-                //current = openNodes.ExtractMin();
 
                 closedNodes.Add(current);
 

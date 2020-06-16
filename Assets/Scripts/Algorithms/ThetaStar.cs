@@ -63,8 +63,6 @@ namespace Pathfinding.Algorithms
 
                 current = openNodes.ExtractMin();
 
-                //current = openNodes.ExtractMin();
-
                 closedNodes.Add(current);
 
                 foreach (var neighbour in current.neighbours)
