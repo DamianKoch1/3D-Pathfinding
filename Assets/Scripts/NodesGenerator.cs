@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Resolvers;
 using Pathfinding.Containers;
 using Pathfinding.Serialization;
 using SimplexNoise;
@@ -7,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 namespace Pathfinding
@@ -47,8 +49,8 @@ namespace Pathfinding
 
         private void Start()
         {
-            //Load();
-            Generate();
+            Load();
+            //Generate();
         }
 
         private async void Generate()
@@ -505,6 +507,10 @@ namespace Pathfinding
 
         public async Task Serialize()
         {
+            if (!Directory.Exists(Application.streamingAssetsPath))
+            {
+                Directory.CreateDirectory(Application.streamingAssetsPath);
+            }
             var data = new GeneratorData(this);
             FileStream fs = null;
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -529,7 +535,7 @@ namespace Pathfinding
         }
 
         public MessagePackCompression compression;
-        public MessagePackSerializerOptions options => MessagePackSerializerOptions.Standard.WithCompression(compression);
+        public MessagePackSerializerOptions options => MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(StandardResolver.Instance, GeneratedResolver.Instance)).WithCompression(compression);
 
         [HideInInspector]
         public bool deserializing;
@@ -541,12 +547,29 @@ namespace Pathfinding
             FileStream fs = null;
             GeneratorData data = null;
             deserializing = true;
+
             var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                fs = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Open, FileAccess.Read, FileShare.None, 128000);
-                data = await Task.Run(() => MessagePackSerializer.DeserializeAsync<GeneratorData>(fs, options)).Result;
-                //data = MessagePackSerializer.Deserialize<GeneratorData>(fs, options);
+                if (Application.platform == RuntimePlatform.Android)
+                {
+                    UnityWebRequest www = new UnityWebRequest(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes")
+                    {
+                        downloadHandler = new DownloadHandlerBuffer()
+                    };
+                    www.SendWebRequest();
+                    while (!www.isDone)
+                    {
+                        await Task.Delay(10);
+                    }
+                    data = MessagePackSerializer.Deserialize<GeneratorData>(www.downloadHandler.data, options);
+                }
+                else
+                {
+                    fs = new FileStream(Application.streamingAssetsPath + "/" + SceneManager.GetActiveScene().name + "_" + gameObject.name + ".nodes", FileMode.Open, FileAccess.Read, FileShare.None, 128000);
+                    data = await Task.Run(() => MessagePackSerializer.DeserializeAsync<GeneratorData>(fs, options)).Result;
+                    //data = MessagePackSerializer.Deserialize<GeneratorData>(fs, options);
+                }
             }
             catch (System.Exception e)
             {
@@ -566,12 +589,12 @@ namespace Pathfinding
                     }
                     if (pathfindingType != PathfindingType.navmeshOnly)
                     {
-                        MarchCubes(1);
+                        MarchCubes();
                     }
                     AssignNeighbours();
-                    OnInitialize?.Invoke();
                     print("Init, " + sw.Elapsed.TotalSeconds);
                     sw.Stop();
+                    OnInitialize?.Invoke();
                 }
             }
         }
