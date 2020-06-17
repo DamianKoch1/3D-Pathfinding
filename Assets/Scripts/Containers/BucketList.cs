@@ -12,7 +12,7 @@ namespace Pathfinding.Containers
     {
         public List<List<T>> buckets;
 
-        public readonly int bucketRange;
+        public readonly float bucketRange;
 
         public readonly float minBucketValue;
 
@@ -23,7 +23,7 @@ namespace Pathfinding.Containers
         /// </summary>
         /// <param name="_bucketRange"></param>
         /// <param name="_minBucketValue"></param>
-        public BucketList(int _bucketRange, float _minBucketValue)
+        public BucketList(float _bucketRange, float _minBucketValue)
         {
             bucketRange = _bucketRange;
             minBucketValue = _minBucketValue;
@@ -33,7 +33,7 @@ namespace Pathfinding.Containers
 
         public void Add(T item)
         {
-            var bucket = (int)(item.GetBucketValue() - minBucketValue) / bucketRange;
+            var bucket = (int)((item.GetBucketValue() - minBucketValue) / bucketRange);
             if (bucket >= buckets.Count)
             {
                 for (int i = buckets.Count; i <= bucket; i++)
@@ -47,7 +47,7 @@ namespace Pathfinding.Containers
 
         public bool Contains(T item)
         {
-            var bucket = (int)(item.GetBucketValue() - minBucketValue) / bucketRange;
+            var bucket = (int)((item.GetBucketValue() - minBucketValue) / bucketRange);
             if (bucket < 0) return false;
             if (bucket >= buckets.Count) return false;
             if (buckets[bucket].Count == 0) return false;
@@ -56,7 +56,7 @@ namespace Pathfinding.Containers
 
         public bool Remove(T item)
         {
-            var bucket = (int)item.GetBucketValue() / bucketRange;
+            var bucket = (int)((item.GetBucketValue() - minBucketValue) / bucketRange);
             if (bucket >= buckets.Count) return false;
             if (buckets[bucket].Count == 0) return false;
             if (buckets[bucket].Remove(item))
