@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   algorithm: 0
   heuristic: 0
-  costIncrease: 1
+  costIncrease: 0
   benchmark: 0
   greediness: 0.787

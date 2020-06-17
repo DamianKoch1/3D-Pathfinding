@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
-  m_Name: MeshPathfinding
+  m_Name: DemoPathfindingSettings
   m_EditorClassIdentifier: 
-  heuristic: 3
-  costIncrease: 1
+  algorithm: 1
+  heuristic: 0
+  costIncrease: 0
   benchmark: 1
-  highF: {r: 1, g: 0, b: 0, a: 1}
-  lowF: {r: 0, g: 1, b: 0, a: 1}
-  greediness: 0.612
+  greediness: 0.716

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 03cc7693b632f164e921e9d967b0c213, type: 3}
-  m_Name: Obstacles
+  m_Name: DemoObstacles
   m_EditorClassIdentifier: 
   prefab: {fileID: 3167575916594899182, guid: 9c43c6a5ff2ecd141bd99fee1772b1ab, type: 3}
   count: 300
