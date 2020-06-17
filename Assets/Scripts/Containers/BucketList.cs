@@ -4,6 +4,10 @@ using UnityEngine;
 
 namespace Pathfinding.Containers
 {
+    /// <summary>
+    /// A list containing smaller lists that hold items with values within a given range, greatly reduces size of list operated on when inserting etc
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class BucketList<T> : IEnumerable<T> where T : IBucketItem
     {
         public List<List<T>> buckets;
@@ -14,6 +18,11 @@ namespace Pathfinding.Containers
 
         public int Count { private set; get; }
 
+        /// <summary>
+        /// Creates a BucketList which holds items with values equal or above _minBucketValue, each bucket holds items within min valu + _bucketRange * its index
+        /// </summary>
+        /// <param name="_bucketRange"></param>
+        /// <param name="_minBucketValue"></param>
         public BucketList(int _bucketRange, float _minBucketValue)
         {
             bucketRange = _bucketRange;
@@ -58,6 +67,10 @@ namespace Pathfinding.Containers
             return false;
         }
 
+        /// <summary>
+        /// Returns the lowest valued item of the lowest filled bucket and removes it
+        /// </summary>
+        /// <returns></returns>
         public T ExtractMin()
         {
             for (int i = 0; i < buckets.Count; i++)

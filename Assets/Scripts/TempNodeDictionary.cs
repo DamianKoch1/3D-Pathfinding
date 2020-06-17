@@ -28,7 +28,6 @@ namespace Pathfinding
         /// <summary>
         /// Removes all temp nodes from the original nodes neighbours
         /// </summary>
-        /// <param name="clearReferences"></param>
         public void Cleanup()
         {
             foreach (var keyNode in Keys)

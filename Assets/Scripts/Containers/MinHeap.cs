@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Pathfinding.Containers
 {
+    /// <summary>
+    /// Binary tree where children are always larger than parent, items store their tree indices to improve Contains check speed
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class MinHeap<T> : IEnumerable<T> where T : IHeapItem<T>
     {
         private List<T> items;

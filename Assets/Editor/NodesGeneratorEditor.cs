@@ -1,15 +1,10 @@
-﻿using Pathfinding.Serialization;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Pathfinding.Editors
 {
     /// <summary>
-    /// Displays buttons to call commonly used functions like generating NavMesh in Editor
+    /// Displays buttons to call commonly used functions like generating nodes in Editor
     /// </summary>
     [CustomEditor(typeof(NodesGenerator))]
     public class NodesGeneratorEditor : Editor

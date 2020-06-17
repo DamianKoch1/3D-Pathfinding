@@ -4,7 +4,7 @@ namespace Pathfinding.NavMesh
 {
     public static class MarchingTables
     {
-        //http://paulbourke.net/geometry/polygonise/
+        //tables taken from http://paulbourke.net/geometry/polygonise/
 
         /// <summary>
         /// Size 16 array of cube edge indices (0 - 11) for each 256 cell types, triangles are built from triplets of values > -1
@@ -280,7 +280,6 @@ namespace Pathfinding.NavMesh
         // c0---e0---c1
 
 
-        //using Vector3Int would require more expensive Vector3 casts for Marching Cubes interpolation
         /// <summary>
         /// Local position of cube corners
         /// </summary>

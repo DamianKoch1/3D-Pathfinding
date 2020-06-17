@@ -1,9 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Pathfinding
 {
+    /// <summary>
+    /// Runs desired algorithm n times after target generator is initialized, stops once no path has been found to prevent crashing from too many opened nodes
+    /// </summary>
     public class PathfindingProfiler : MonoBehaviour
     {
         [SerializeField]

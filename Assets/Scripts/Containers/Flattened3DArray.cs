@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace Pathfinding.Containers
 {
+    /// <summary>
+    /// Flat representation of a T[,,] array, can be accessed with T[i] and T[x, y, z]
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class Flattened3DArray<T>
     {
@@ -32,6 +33,10 @@ namespace Pathfinding.Containers
             items = new T[0];
         }
 
+        /// <summary>
+        /// Returns a T[,,] array from this arrays items
+        /// </summary>
+        /// <returns></returns>
         public T[,,] Unflatten()
         {
             int width = dimensions[0];
@@ -69,6 +74,14 @@ namespace Pathfinding.Containers
     /// </summary>
     public static class FlattenedArrayUtils
     {
+        /// <summary>
+        /// Creates a flattened array with given dimensions
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="x">width</param>
+        /// <param name="y">height</param>
+        /// <param name="z">depth</param>
+        /// <returns></returns>
         public static Flattened3DArray<T> New<T>(int x, int y, int z)
         {
             var retVal = new Flattened3DArray<T>();
@@ -77,6 +90,12 @@ namespace Pathfinding.Containers
             return retVal;
         }
 
+        /// <summary>
+        /// Creates a flat representation of given 3D array
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="array"></param>
+        /// <returns></returns>
         public static Flattened3DArray<T> MakeFrom<T>(T[,,] array)
         {
             var retVal = new Flattened3DArray<T>();

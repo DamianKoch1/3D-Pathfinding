@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 
 namespace Pathfinding
@@ -27,10 +27,15 @@ namespace Pathfinding
         [SerializeField]
         private float speed;
 
+        [SerializeField, Range(0, 1)]
+        private float turnRate = 0.3f;
+
         [SerializeField]
         private float stoppingDistance;
 
         private Vector3 dir;
+
+        public Action OnReachedTarget;
 
 
         void Awake()
@@ -54,10 +59,11 @@ namespace Pathfinding
 
         void Update()
         {
-            if (path == null) return;
+            if (!(path?.Length > 0)) return;
             if (idx >= path.Length)
             {
                 path = null;
+                OnReachedTarget?.Invoke();
                 return;
             }
             var newPos = Vector3.MoveTowards(transform.position, path[idx], speed * Time.deltaTime);
@@ -67,7 +73,7 @@ namespace Pathfinding
             }
             dir = newPos - transform.position;
             transform.position = newPos;
-            transform.forward = Vector3.Lerp(transform.forward, dir, 0.3f);
+            transform.forward = Vector3.Lerp(transform.forward, dir, turnRate);
         }
 
         private void OnDrawGizmos()

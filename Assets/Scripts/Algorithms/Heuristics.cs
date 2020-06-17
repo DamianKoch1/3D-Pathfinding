@@ -1,15 +1,16 @@
 ﻿using UnityEngine;
+using static UnityEngine.Mathf;
 
 namespace Pathfinding.Algorithms
 {
     /// <summary>
-    /// Different heuristics functions to estimate minimum distance from a to b
+    /// Different heuristics functions to estimate minimum path length from a to b
     /// </summary>
     public static class Heuristics
     {
-        public static readonly float Sqrt2 = Mathf.Sqrt(2);
+        public static readonly float Sqrt2 = Sqrt(2);
 
-        public static readonly float Sqrt3 = Mathf.Sqrt(3);
+        public static readonly float Sqrt3 = Sqrt(3);
 
         /// <summary>
         /// Line distance from a to b
@@ -30,7 +31,7 @@ namespace Pathfinding.Algorithms
         /// <returns></returns>
         public static float Manhattan(Vector3 a, Vector3 b)
         {
-            return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
+            return Abs(a.x - b.x) + Abs(a.y - b.y) + Abs(a.z - b.z);
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace Pathfinding.Algorithms
         /// <returns></returns>
         public static float Chebyshev(Vector3 a, Vector3 b)
         {
-            return Mathf.Max(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y), Mathf.Abs(a.z - b.z));
+            return Max(Abs(a.x - b.x), Abs(a.y - b.y), Abs(a.z - b.z));
         }
 
         /// <summary>
@@ -52,24 +53,12 @@ namespace Pathfinding.Algorithms
         /// <returns></returns>
         public static float Octile(Vector3 a, Vector3 b)
         {
-            var dx = Mathf.Abs(a.x - b.x);
-            var dy = Mathf.Abs(a.y - b.y);
-            var dz = Mathf.Abs(a.z - b.z);
+            var dx = Abs(a.x - b.x);
+            var dy = Abs(a.y - b.y);
+            var dz = Abs(a.z - b.z);
 
-            float min1 = Mathf.Min(dx, dy, dz);
-            float min2 = dx;
-            if (min1 == dx)
-            {
-                min2 = Mathf.Min(dy, dz);
-            }
-            else if (min1 == dy)
-            {
-                min2 = Mathf.Min(dx, dz);
-            }
-            else if (min1 == dz)
-            {
-                min2 = Mathf.Min(dx, dy);
-            }
+            float min1 = Min(dx, dy, dz);
+            float min2 = Max(Min(dx, dy), Min(Max(dx, dy), dz));
 
             return dx + dy + dz - min1 * (3 - Sqrt3) - min2 * (2 - Sqrt2);
         }

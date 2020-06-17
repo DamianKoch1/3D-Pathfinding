@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Pathfinding
@@ -88,6 +87,9 @@ namespace Pathfinding
             return retVal;
         }
 
+        /// <summary>
+        /// Resets cost / heuristic values of all nodes
+        /// </summary>
         public void ResetNodes()
         {
             foreach (var node in nodes.Values)
@@ -100,6 +102,9 @@ namespace Pathfinding
             }
         }
 
+        /// <summary>
+        /// Finds all nodes that are on this chunks bounds, checks for similar nodes in neighbouring chunks and saves them as neighbours
+        /// </summary>
         public void FindCrossChunkNeighbours()
         {
             var max = owner.bounds.max;
@@ -153,6 +158,9 @@ namespace Pathfinding
             }
         }
 
+        /// <summary>
+        /// Interprets the node identifier keys of a node as dictionary keys within this or a neighbouring chunks graph and assigns the corresponding node as a neighbour
+        /// </summary>
         public void AssignNeighbours()
         {
             foreach (var node in nodes.Values)
@@ -182,25 +190,6 @@ namespace Pathfinding
                     }
                 }
             }
-        }
-    }
-
-    [Serializable]
-    public struct NavmeshHit
-    {
-        public Vector3 point;
-        public int triangleIndex;
-        public Vector3 normal;
-
-        [Tooltip("1,0,0 = 1st triangle corner, 0,1,0 2nd, 0,0,1 3rd")]
-        public Vector3 barycentric;
-
-        public NavmeshHit(RaycastHit hit)
-        {
-            point = hit.point;
-            triangleIndex = hit.triangleIndex;
-            barycentric = hit.barycentricCoordinate;
-            normal = hit.normal;
         }
     }
 }

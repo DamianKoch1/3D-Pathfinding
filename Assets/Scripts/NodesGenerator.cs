@@ -2,7 +2,6 @@
 using MessagePack.Resolvers;
 using Pathfinding.Containers;
 using Pathfinding.Serialization;
-using SimplexNoise;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,40 +48,17 @@ namespace Pathfinding
 
         private void Start()
         {
-            Load();
-            //Generate();
+            Deserialize();
         }
 
-        private async void Generate()
-        {
-            await GenerateNodes();
-            OnInitialize?.Invoke();
-            if (pathfindingType != PathfindingType.navmeshOnly)
-            {
-                FindGridPath(start.position, goal.position, pathfindingSettings);
-            }
-            if (pathfindingType != PathfindingType.gridOnly)
-            {
-                FindGraphPath(start.position, goal.position, pathfindingSettings);
-            }
-        }
-
-        private async void Load()
-        {
-            await Deserialize();
-            if (pathfindingType != PathfindingType.navmeshOnly)
-            {
-                FindGridPath(start.position, goal.position, pathfindingSettings);
-            }
-            if (pathfindingType != PathfindingType.gridOnly)
-            {
-                FindGraphPath(start.position, goal.position, pathfindingSettings);
-            }
-        }
 
         [HideInInspector]
         public bool generating;
 
+        /// <summary>
+        /// Builds grid / navmesh / graph depending on pathfinding type, also saves neighbours
+        /// </summary>
+        /// <returns></returns>
         public async Task GenerateNodes()
         {
             NAVMESH_LAYER = LayerMask.GetMask("NavMesh");
@@ -112,6 +88,11 @@ namespace Pathfinding
             sw.Stop();
         }
 
+        /// <summary>
+        /// Resets grid of all chunks
+        /// </summary>
+        /// <param name="delay"></param>
+        /// <returns></returns>
         private async Task ClearGrid(int delay = 0)
         {
             foreach (var chunk in chunks.items)
@@ -206,14 +187,6 @@ namespace Pathfinding
         {
             if (chunks == null) return;
 
-            if (gridSettings.mode == GenerationMode.Noise)
-            {
-                if (gridSettings.useRandomSeed)
-                {
-                    gridSettings.seed = Random.Range(0, 10000);
-                    Noise.Seed = gridSettings.seed;
-                }
-            }
             foreach (var chunk in chunks.items)
             {
                 chunk.GenerateGrid(blockedOnly);
@@ -301,9 +274,9 @@ namespace Pathfinding
         /// <param name="start"></param>
         /// <param name="goal"></param>
         /// <returns></returns>
-        public List<NavmeshHit> GetNavMeshIntersections(Vector3 start, Vector3 goal)
+        public List<Vector3> GetNavMeshIntersections(Vector3 start, Vector3 goal)
         {
-            var hits = new List<NavmeshHit>();
+            var hits = new List<Vector3>();
             var dir = (goal - start).normalized;
             Physics.queriesHitBackfaces = true;
             var pos = start;
@@ -315,7 +288,7 @@ namespace Pathfinding
             while (Physics.Raycast(pos, goal - pos, out var hit, Vector3.Distance(pos, goal), NAVMESH_LAYER))
             {
                 maxRaycasts--;
-                hits.Add(new NavmeshHit(hit));
+                hits.Add(hit.point);
                 //adding small offset from last point to prevent raycasting on the same face
                 pos = hit.point + dir * 0.0001f;
                 if (Vector3.Distance(pos, start) < 0.5f) break;
@@ -396,11 +369,11 @@ namespace Pathfinding
                 for (int i = 0; i < hits.Count - 1; i += 2)
                 {
                     //add temp nodes at navmesh hits
-                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i].point));
-                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i + 1].point));
+                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i]));
+                    nodesClosestToHit.Add(GetClosestGraphNode(hits[i + 1]));
                     if (i > 0)
                     {
-                        tempNodes.AddNode(nodesClosestToHit[i], hits[i].point);
+                        tempNodes.AddNode(nodesClosestToHit[i], hits[i]);
 
                         //link navmesh exiting hits with entering hits
                         if (i % 2 == 0)
@@ -411,7 +384,7 @@ namespace Pathfinding
                     }
                     if (i < hits.Count - 2)
                     {
-                        tempNodes.AddNode(nodesClosestToHit[i + 1], hits[i + 1].point);
+                        tempNodes.AddNode(nodesClosestToHit[i + 1], hits[i + 1]);
                     }
 
                 }

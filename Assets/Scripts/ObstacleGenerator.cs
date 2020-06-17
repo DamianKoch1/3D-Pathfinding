@@ -1,9 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Pathfinding
 {
+    /// <summary>
+    /// Generates navmesh obstacles for testing a generator
+    /// </summary>
     public class ObstacleGenerator : MonoBehaviour
     {
         public ObstacleGenerationSettings obstacleSettings;

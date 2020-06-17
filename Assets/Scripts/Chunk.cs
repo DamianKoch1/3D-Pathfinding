@@ -1,6 +1,4 @@
-﻿using SimplexNoise;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine;
 using Pathfinding.NavMesh;
 using Pathfinding.Serialization;
@@ -66,23 +64,14 @@ namespace Pathfinding
         /// </summary>
         public void GenerateGrid(bool blockedOnly = false)
         {
-            System.Func<Vector3, float> GetIsoValue = null;
-            switch (gridSettings.mode)
+            System.Func<Vector3, float> GetIsoValue = (Vector3 pos) =>
             {
-                case GenerationMode.Overlap:
-                    GetIsoValue = (Vector3 pos) =>
-                    {
-                        var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, NodesGenerator.OBSTACLE_LAYER);
-                        if (overlaps.Length == 0) return 1;
-                        var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
-                        return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
-                    };
-                    break;
-                case GenerationMode.Noise:
-                    GetIsoValue = (Vector3 pos) => Noise.CalcPixel3D(pos.x, pos.y, pos.z, gridSettings.scale) / 255f;
-                    break;
-            }
-
+                var overlaps = Physics.OverlapSphere(pos, gridSettings.navMeshOffset, NodesGenerator.OBSTACLE_LAYER);
+                if (overlaps.Length == 0) return 1;
+                var nearest = overlaps.OrderBy(o => Vector3.Distance(pos, o.ClosestPoint(pos))).First();
+                return Vector3.Distance(pos, nearest.ClosestPoint(pos)) / gridSettings.navMeshOffset;
+            };
+            
             grid = new Grid(gridSettings, GetIsoValue, this, blockedOnly);
         }
 
@@ -94,6 +83,9 @@ namespace Pathfinding
             graph = new MeshVertexGraph(GetComponent<MeshFilter>(), this);
         }
 
+        /// <summary>
+        /// Assigns each nodes actual neighbours using its serialized identifiers
+        /// </summary>
         public void AssignNeighbours()
         {
             grid?.AssignNeighbours();
@@ -151,45 +143,7 @@ namespace Pathfinding
             }
         }
 
-        /// <summary>
-        /// Left here for documentation, creates a combined mesh of all meshes inside bounds expanded by a set amount, not suitable for NavMesh due to overlaps
-        /// </summary>
-        public void ExpandMeshes()
-        {
-            if (!gridSettings) return;
-            var combine = new List<CombineInstance>();
-            var filter = GetComponent<MeshFilter>();
-            var collider = GetComponent<MeshCollider>();
-            foreach (var obj in Physics.OverlapBox(transform.position, gridSettings.chunkSize / 2, Quaternion.identity, ~NodesGenerator.NAVMESH_LAYER))
-            {
-                var mesh = obj.GetComponent<MeshFilter>()?.sharedMesh;
-                if (!mesh) continue;
-                var scale = obj.transform.lossyScale;
-                var newMesh = new Mesh();
-                var verts = mesh.vertices;
-                for (int i = 0; i < verts.Length; i++)
-                {
-                    verts[i] += new Vector3
-                        (
-                            Mathf.Sign(verts[i].x) / scale.x,
-                            Mathf.Sign(verts[i].y) / scale.y,
-                            Mathf.Sign(verts[i].z) / scale.z
-                        ) * gridSettings.navMeshOffset;
-                    verts[i] = obj.transform.localToWorldMatrix.MultiplyPoint3x4(verts[i]);
-                    verts[i] -= transform.position;
-                }
-                newMesh.vertices = verts;
-                newMesh.triangles = mesh.triangles;
-                combine.Add(new CombineInstance() { mesh = newMesh });
-            }
-            var combinedMesh = new Mesh();
-            combinedMesh.CombineMeshes(combine.ToArray(), true, false);
-            combinedMesh.RecalculateNormals();
-            combinedMesh.Optimize();
-            filter.mesh = combinedMesh;
-            collider.sharedMesh = combinedMesh;
-        }
-
+        
         /// <summary>
         /// Builds NavMesh from grid using MarchingCubes algorithm
         /// </summary>
@@ -209,11 +163,19 @@ namespace Pathfinding
             collider.sharedMesh = mesh;
         }
 
+        /// <summary>
+        /// Returns a container with navmesh triangles / vertices, node data from grid / graph
+        /// </summary>
+        /// <returns></returns>
         public ChunkData Serialize()
         {
             return new ChunkData(this);
         }
 
+        /// <summary>
+        /// Restores grid / graph / navmesh from given data
+        /// </summary>
+        /// <param name="data"></param>
         public void Deserialize(ChunkData data)
         {
             if (data.gridNodes?.Length > 0)

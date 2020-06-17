@@ -1,12 +1,12 @@
 ﻿using MessagePack;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding.Serialization
 {
+    /// <summary>
+    /// Container for all Chunk data of a generator
+    /// </summary>
     [MessagePackObject]
     public class GeneratorData
     {
@@ -28,6 +28,9 @@ namespace Pathfinding.Serialization
         }
     }
 
+    /// <summary>
+    /// Container for grid nodes / graph nodes / navmesh triangles / vertices of a chunk
+    /// </summary>
     [MessagePackObject]
     public class ChunkData
     {

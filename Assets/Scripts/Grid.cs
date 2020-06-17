@@ -1,5 +1,4 @@
-﻿using Pathfinding.Serialization;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -44,9 +43,6 @@ namespace Pathfinding
 
         public IEnumerable<Node> Nodes => nodes.Cast<Node>();
 
-        //public GridNode[,,] nodes;
-
-        //no noticeable generation performance diff, but serializable
         public Node[,,] nodes;
 
         public Vector3 step;
@@ -61,10 +57,6 @@ namespace Pathfinding
         {
             owner = _owner;
             nodes = _nodes;
-
-            //xSize = nodes.dimensions[0];
-            //ySize = nodes.dimensions[1];
-            //zSize = nodes.dimensions[2];
 
             xSize = nodes.GetLength(0);
             ySize = nodes.GetLength(1);
@@ -94,7 +86,6 @@ namespace Pathfinding
             zSize = (int)(extents.z / step.z);
 
             nodes = new Node[xSize, ySize, zSize];
-            //nodes = new FlattenedNode3DArray(FlattenedArrayUtils.New<Node>(xSize, ySize, zSize));
 
             Vector3 min = owner.bounds.min;
             Vector3 pos = min;
@@ -131,6 +122,9 @@ namespace Pathfinding
             }
         }
 
+        /// <summary>
+        /// Interprets the node identifier keys of a node as array indices within this or a neighbouring chunk grid and assigns the corresponding node as a neighbour
+        /// </summary>
         public void AssignNeighbours()
         {
             foreach (var node in nodes)
@@ -295,7 +289,7 @@ namespace Pathfinding
         }
 
         /// <summary>
-        /// Resets cost / heuristic values of all nodes, not calling this before finding another similar path might speed it up
+        /// Resets cost / heuristic values of all nodes
         /// </summary>
         public void ResetNodes()
         {

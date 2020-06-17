@@ -3,13 +3,12 @@ using Pathfinding.Containers;
 using Pathfinding.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Pathfinding
 {
     /// <summary>
-    /// Node used in grids / graphs / pathfinding, knows its world position, (grid index), neighbours, cost, heuristic, and previous node of path
+    /// Node used in grids / graphs / pathfinding, knows its world position, iso value (walkability), neighbours, cost, heuristic, and parent in path
     /// </summary>
     [MessagePackObject]
     public class Node : IHeapItem<Node>, IBucketItem

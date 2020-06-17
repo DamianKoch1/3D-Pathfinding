@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Pathfinding
 {
@@ -21,25 +20,8 @@ namespace Pathfinding
 
         public Vector3 step;
 
-        public GenerationMode mode;
-
-        [Header("Overlap settings")]
         [Range(0, 50)]
         public float navMeshOffset;
 
-        [Header("Noise settings")]
-        [Range(0.001f, 0.04f)]
-        public float scale;
-
-        public int seed;
-
-        public bool useRandomSeed;
-
-    }
-
-    public enum GenerationMode
-    {
-        Overlap,
-        Noise
     }
 }

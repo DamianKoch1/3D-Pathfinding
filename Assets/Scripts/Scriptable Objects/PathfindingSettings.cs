@@ -14,8 +14,7 @@ namespace Pathfinding
         [Tooltip("Euclidean: line distance \nManhattan: total coordinate delta \nChebyshev: highest coordinate delta \nOctile: minimum grid path length allowing diagonal movement")]
         public HeuristicsFunction heuristic;
 
-        [Tooltip("One: always add 1 cost per node (not recommended, unscaled with distance) \nEuclidean: Add line distance as cost \nManhattan: Add total coordinate delta as cost")]
-        public CostIncreaseFunction costIncrease;
+        public HeuristicsFunction costIncrease;
 
 
         public bool benchmark;
@@ -24,6 +23,12 @@ namespace Pathfinding
         [Range(0, 1), Tooltip("Higher value means greedier depth-first search, lower means breadth-first, CHANGE IN SMALL STEPS, usually doesnt't need to go below 0.7f")]
         public float greediness = 0.5f;
 
+        /// <summary>
+        /// Estimates path cost between a and b using selected heuristics function
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public float Heuristic(Vector3 a, Vector3 b)
         {
             switch (heuristic)
@@ -44,12 +49,14 @@ namespace Pathfinding
         {
             switch (costIncrease)
             {
-                case CostIncreaseFunction.one:
-                    return 1;
-                case CostIncreaseFunction.euclidean:
+                case HeuristicsFunction.euclidean:
                     return Heuristics.Euclidean(a, b);
-                case CostIncreaseFunction.manhattan:
+                case HeuristicsFunction.manhattan:
                     return Heuristics.Manhattan(a, b);
+                case HeuristicsFunction.chebyshev:
+                    return Heuristics.Chebyshev(a, b);
+                case HeuristicsFunction.octile:
+                    return Heuristics.Octile(a, b);
             }
 
             return 0;

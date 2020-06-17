@@ -89,6 +89,14 @@ namespace Pathfinding.NavMesh
             return grid[x, y, z];
         }
 
+        /// <summary>
+        /// Returns a point on given cube edge using corner iso values a and b
+        /// </summary>
+        /// <param name="cubeEdge">index of cube edge</param>
+        /// <param name="a">corner a iso value</param>
+        /// <param name="b">corner b iso value</param>
+        /// <param name="isoLevel">walkability threshold</param>
+        /// <returns></returns>
         public static Vector3 Interp(int cubeEdge, float a, float b, float isoLevel)
         {
             Vector3 p0 = CubeCorners[EdgeCornerIdx[cubeEdge, 0]];
@@ -98,7 +106,15 @@ namespace Pathfinding.NavMesh
             return p0 + t * (p1 - p0);
         }
 
-
+        /// <summary>
+        /// Returns corresponding index of lookup table for given combination of (un)blocked corners
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <param name="isoLevel"></param>
+        /// <returns></returns>
         public static int GetCellType(Grid grid, int x, int y, int z, float isoLevel)
         {
             //0 - 255
