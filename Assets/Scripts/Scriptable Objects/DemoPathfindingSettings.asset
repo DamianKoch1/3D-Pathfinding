@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5544c60f2db5e849a344a2d105d2402, type: 3}
   m_Name: DemoPathfindingSettings
   m_EditorClassIdentifier: 
-  algorithm: 1
+  algorithm: 0
   heuristic: 0
   costIncrease: 0
   benchmark: 1
-  greediness: 0.716
+  greediness: 0.5

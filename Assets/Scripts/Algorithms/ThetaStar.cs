@@ -102,7 +102,7 @@ namespace Pathfinding.Algorithms
             if (settings.benchmark)
             {
                 sw.Stop();
-                Debug.Log("Theta*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.Milliseconds + ", closed: " + closedNodes.Count + ", opened: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
+                Debug.Log("Theta*, Heuristic: " + settings.heuristic + ", Cost increase: " + settings.costIncrease + ", Path length: " + pathLength * 100 / distance + "%, ms: " + sw.Elapsed.TotalMilliseconds + ", closed: " + closedNodes.Count + ", opened: " + openNodes.Count + ", Neighbour checks: " + neighbourChecks);
             }
 
             return path;

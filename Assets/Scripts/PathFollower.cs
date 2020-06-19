@@ -11,9 +11,6 @@ namespace Pathfinding
         [SerializeField]
         private NodesGenerator generator;
 
-        [SerializeField]
-        private Transform target;
-
         private Vector3[] path;
 
         [SerializeField]
@@ -23,6 +20,8 @@ namespace Pathfinding
         private PathfindingSettings settings;
 
         private int idx;
+
+        private Vector3 destination;
 
         [SerializeField]
         private float speed;
@@ -35,30 +34,39 @@ namespace Pathfinding
 
         private Vector3 dir;
 
+        private bool paused;
+
         public Action OnReachedTarget;
 
 
-        void Awake()
-        {
-            generator.OnInitialize += FindPath;
-        }
 
-        private void FindPath()
+        public void SetDestination(Vector3 _destination)
         {
             idx = 1;
             switch (mode)
             {
                 case PathfindingMode.grid:
-                    path = generator.FindGridPath(transform.position, target.position, settings).ToArray();
+                    path = generator.FindGridPath(transform.position, _destination, settings).ToArray();
                     break;
                 case PathfindingMode.navmesh:
-                    path = generator.FindGraphPath(transform.position, target.position, settings).ToArray();
+                    path = generator.FindGraphPath(transform.position, _destination, settings).ToArray();
                     break;
             }
         }
 
+        public void Pause()
+        {
+            paused = true;
+        }
+
+        public void Unpause()
+        {
+            paused = false;
+        }
+
         void Update()
         {
+            if (paused) return;
             if (!(path?.Length > 0)) return;
             if (idx >= path.Length)
             {
