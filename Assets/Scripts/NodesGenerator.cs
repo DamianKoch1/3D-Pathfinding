@@ -544,9 +544,9 @@ namespace Pathfinding
                     //data = MessagePackSerializer.Deserialize<GeneratorData>(fs, options);
                 }
             }
-            catch (System.Exception e)
+            catch
             {
-                print(e);
+                //print(e);
             }
             finally
             {

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: DemoGrid
   m_EditorClassIdentifier: 
   drawNodes: 0
-  drawExtents: 0
+  drawExtents: 1
   nodeColor: {r: 0, g: 1, b: 0, a: 1}
-  chunkSize: {x: 300, y: 300, z: 300}
+  chunkSize: {x: 30, y: 30, z: 30}
   isoLevel: 0.5
   allowDiagonalNeighbours: 1
-  step: {x: 20, y: 20, z: 20}
-  navMeshOffset: 19.3
+  step: {x: 3, y: 3, z: 3}
+  navMeshOffset: 3
