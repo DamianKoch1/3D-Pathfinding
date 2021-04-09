@@ -23,12 +23,13 @@ namespace Pathfinding.Algorithms
         /// <returns></returns>
         public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out BucketList<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
         {
+            NodesGenerator.CostHeuristicBalance = settings.greediness;
             int neighbourChecks = 0;
 
             int numIterations = 0;
 
             //euclidean distance from start to end
-            float distance = Vector3.Distance(start.pos, goal.pos); 
+            float distance = Vector3.Distance(start.pos, goal.pos);
 
             //full length of path
             float pathLength = 0;
@@ -49,7 +50,6 @@ namespace Pathfinding.Algorithms
             closedNodes = new HashSet<Node>();
 
             Node current = null;
-            start.costHeuristicBalance = settings.greediness;
             start.cost = 0;
             start.parent = start;
             start.heuristic = settings.Heuristic(start.pos, goal.pos);
@@ -65,21 +65,19 @@ namespace Pathfinding.Algorithms
                 foreach (var neighbour in current.neighbours)
                 {
                     neighbourChecks++;
-                    if (neighbour.isoValue > isoLevel)
+                    if (neighbour.isoValue <= isoLevel) continue;
+                    if (closedNodes.Contains(neighbour)) continue;
+                    var newCost = current.cost + settings.CostIncrease(current.pos, neighbour.pos);
+                    if (openNodes.Contains(neighbour))
                     {
-                        if (!closedNodes.Contains(neighbour))
-                        {
-                            if (!openNodes.Contains(neighbour))
-                            {
-                                neighbour.costHeuristicBalance = settings.greediness;
-                                neighbour.parent = current;
-                                neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
-                                neighbour.cost = current.cost + settings.CostIncrease(current.pos, neighbour.pos);
-
-                                openNodes.Add(neighbour);
-                            }
-                        }
+                        if (newCost >= neighbour.cost) continue;
+                        openNodes.Remove(neighbour);
                     }
+                    neighbour.parent = current;
+                    neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
+                    neighbour.cost = newCost;
+
+                    openNodes.Add(neighbour);
                 }
             }
 

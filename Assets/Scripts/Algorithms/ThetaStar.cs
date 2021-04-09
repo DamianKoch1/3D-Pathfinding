@@ -23,6 +23,7 @@ namespace Pathfinding.Algorithms
         /// <returns></returns>
         public static Stack<Vector3> FindPath(Node start, Node goal, PathfindingSettings settings, float isoLevel, out BucketList<Node> openNodes, out HashSet<Node> closedNodes, int maxIterations = 50000, int nodeCount = 1000)
         {
+            NodesGenerator.CostHeuristicBalance = settings.greediness;
             int neighbourChecks = 0;
 
             int numIterations = 0;
@@ -50,7 +51,6 @@ namespace Pathfinding.Algorithms
             closedNodes = new HashSet<Node>();
 
             Node current = null;
-            start.costHeuristicBalance = settings.greediness;
             start.cost = 0;
             start.parent = start;
             start.heuristic = settings.Heuristic(start.pos, goal.pos);
@@ -66,20 +66,15 @@ namespace Pathfinding.Algorithms
                 foreach (var neighbour in current.neighbours)
                 {
                     neighbourChecks++;
-                    if (neighbour.isoValue > isoLevel)
+                    if (neighbour.isoValue <= isoLevel) continue;
+                    if (closedNodes.Contains(neighbour)) continue;
+                    if (!openNodes.Contains(neighbour))
                     {
-                        if (!closedNodes.Contains(neighbour))
-                        {
-                            if (!openNodes.Contains(neighbour))
-                            {
-                                neighbour.costHeuristicBalance = settings.greediness;
-                                neighbour.parent = current;
-                                neighbour.cost = Mathf.Infinity;
-                                neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
-                            }
-                            UpdateNode(current, neighbour, settings, openNodes);
-                        }
+                        neighbour.parent = current;
+                        neighbour.cost = Mathf.Infinity;
+                        neighbour.heuristic = settings.Heuristic(neighbour.pos, goal.pos);
                     }
+                    UpdateNode(current, neighbour, settings, openNodes);
                 }
             }
 

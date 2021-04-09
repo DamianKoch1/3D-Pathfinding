@@ -35,16 +35,13 @@ namespace Pathfinding
         public List<NodeIdentifier> neighbourIdentifiers;
 
         [IgnoreMember]
-        public float costHeuristicBalance = 0.5f;
-
-        [IgnoreMember]
         public float F
         {
             get
             {
                 if (heuristic != -1 && cost != -1)
                 {
-                    return heuristic * costHeuristicBalance + cost * (1 - costHeuristicBalance);
+                    return heuristic * NodesGenerator.CostHeuristicBalance + cost * (1 - NodesGenerator.CostHeuristicBalance);
                 }
                 return -1;
             }

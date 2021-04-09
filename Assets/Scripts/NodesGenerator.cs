@@ -21,6 +21,8 @@ namespace Pathfinding
 
         public static int OBSTACLE_LAYER;
 
+        public static float CostHeuristicBalance;
+
         public GridGenerationSettings gridSettings;
 
         public PathfindingSettings pathfindingSettings;
